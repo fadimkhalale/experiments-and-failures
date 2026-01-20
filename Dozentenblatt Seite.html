@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dozentenblatt Generator mit RDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .input-section, .output-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+            width: 210mm; /* A4 width */
+            margin: 0 auto;
+        }
+        
+        /* Include all the CSS from the form */
+        .dozentenblatt {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+            color: #000;
+        }
+        .dozentenblatt .container {
+            width: 210mm;
+            margin: 0 auto;
+            padding: 10mm;
+            box-sizing: border-box;
+        }
+        .dozentenblatt .header {
+            text-align: center;
+            margin-bottom: 10mm;
+        }
+        .dozentenblatt .header h1 {
+            font-size: 16px;
+            margin-bottom: 5mm;
+        }
+        .dozentenblatt .header .info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5mm;
+        }
+        .dozentenblatt .section {
+            margin-bottom: 8mm;
+        }
+        .dozentenblatt .section-title {
+            font-weight: bold;
+            margin-bottom: 3mm;
+            text-decoration: underline;
+        }
+        .dozentenblatt .form-row {
+            display: flex;
+            margin-bottom: 2mm;
+            align-items: center;
+        }
+        .dozentenblatt .form-label {
+            width: 40mm;
+            font-weight: bold;
+        }
+        .dozentenblatt .form-input {
+            flex-grow: 1;
+            border-bottom: 1px solid #000;
+            min-height: 5mm;
+        }
+        .dozentenblatt .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5mm;
+        }
+        .dozentenblatt .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-right: 5mm;
+        }
+        .dozentenblatt table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5mm;
+        }
+        .dozentenblatt th, .dozentenblatt td {
+            border: 1px solid #000;
+            padding: 1mm;
+            text-align: center;
+            font-size: 10px;
+        }
+        .dozentenblatt th {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+        .dozentenblatt .signature-area {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15mm;
+        }
+        .dozentenblatt .signature-box {
+            width: 60mm;
+            border-top: 1px solid #000;
+            padding-top: 2mm;
+        }
+        .dozentenblatt .page-break {
+            page-break-after: always;
+        }
+        .dozentenblatt .notes {
+            font-size: 10px;
+            margin-top: 2mm;
+        }
+        .dozentenblatt .two-columns {
+            display: flex;
+            justify-content: space-between;
+        }
+        .dozentenblatt .column {
+            width: 48%;
+        }
+        .dozentenblatt .time-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5mm;
+        }
+        .dozentenblatt .time-table th, .time-table td {
+            border: 1px solid #000;
+            padding: 1mm;
+        }
+        .dozentenblatt .radio-group {
+            display: flex;
+            gap: 5mm;
+        }
+        .dozentenblatt .radio-item {
+            display: flex;
+            align-items: center;
+        }
+        .dozentenblatt .footer {
+            font-size: 10px;
+            text-align: center;
+            margin-top: 5mm;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dozentenblatt Generator mit RDF</h1>
+        
+        <div class="input-section">
+            <h2>RDF/Turtle Eingabe</h2>
+            <p>Geben Sie Ihre Dozentendaten im Turtle (TTL) Format ein:</p>
+            <textarea id="rdf-input" placeholder="Beispiel:
+@prefix ex: &lt;http://example.org/&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+
+ex:dozent
+  ex:titel \"Prof.\" ;
+  ex:vorname \"Max\" ;
+  ex:nachname \"Mustermann\" ;
+  ex:fakultaet \"FIM\" ;
+  ex:arbeitszeit \"Vollzeit\" ;
+  ex:email \"max.mustermann@htwk-leipzig.de\" ;
+  ex:telefon \"+49 341 123456\" ;
+  ex:lehrveranstaltung [
+    ex:ifdNr \"1\" ;
+    ex:fak \"B\" ;
+    ex:stg \"BIB\" ;
+    ex:fs \"1\" ;
+    ex:gruppen \"13 BIB 1 - 5\" ;
+    ex:modulnr \"1300\" ;
+    ex:modulname \"BAUKO I\" ;
+    ex:v \"2\" ;
+    ex:s \"4\" ;
+    ex:p \"10\" ;
+    ex:digital \"\" ;
+    ex:bemerkung \"Kurze Anmerkung\" 
+  ] ."></textarea>
+            
+            <button id="parse-btn">Formular aus RDF füllen</button>
+            <button id="generate-pdf">PDF generieren</button>
+            <button id="reset-form">Formular zurücksetzen</button>
+        </div>
+        
+        <div class="output-section">
+            <h2>Dozentenblatt Vorschau</h2>
+            <div id="form-container" class="form-container dozentenblatt">
+                <!-- The complete form will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // First, let's define the complete form HTML
+        const formHTML = `
+        <div class="container">
+            <div class="header">
+                <div class="info">
+                    <div>Abgabetermin an DS: <span class="form-input" style="width: 20mm;">01.06.2025</span></div>
+                    <div>Eingegangen bei DS: <span class="form-input" style="width: 20mm;"></span></div>
+                </div>
+                <h1>HTWK Leipzig<br>DS</h1>
+                <h1>Dozentenblatt</h1>
+                <h2>Wintersemester 2025/26</h2>
+                <h3>Präsenzplanung<br>(ggf. mit digitalen Anteilen)</h3>
+                <p>Jeder Lehrende füllt bitte nur ein Dozentenblatt aus!</p>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Titel</div>
+                    <div class="form-input" style="width: 20mm;" id="titel"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Vorname</div>
+                    <div class="form-input" style="flex-grow: 1;" id="vorname"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Name</div>
+                    <div class="form-input" style="flex-grow: 1;" id="nachname"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Fakultät/Bereich:</div>
+                    <div class="checkbox-group" id="fakultaet-group">
+                        <div class="checkbox-item"><input type="checkbox" value="FAS"> FAS</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FB"> FB</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FDIT"> FDIT</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FIM"> FIM</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FING"> FING</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FWW"> FWW</div>
+                        <div class="checkbox-item"><input type="checkbox" value="HSZ"> HSZ</div>
+                        <div class="checkbox-item"><input type="checkbox" value="MNZ"> MNZ</div>
+                        <div class="checkbox-item"><input type="checkbox" value="Gast"> Gast</div>
+                        <div class="checkbox-item"><input type="checkbox" value="HonProf"> HonProf</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Arbeitszeit (Pflichtangabe, außer Gast)</div>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" name="work_time" id="fulltime"> <label for="fulltime">Vollzeit</label>
+                            <span class="form-input" style="width: 10mm; margin-left: 2mm;" id="vollzeit-input"></span>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" name="work_time" id="parttime"> <label for="parttime">Teilzeit</label>
+                            <span class="form-input" style="width: 10mm; margin-left: 2mm;" id="teilzeit-input"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">E-Mailadresse (Pflichtangabe)</div>
+                    <div class="form-input" id="email"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">Telefonisch erreichbar unter (optional)</div>
+                    <div class="form-input" id="telefon"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Bitte geben Sie in der Tabelle Ihre Einsätze (auch Bedienfunktionen) an!</div>
+                <div class="section-title">Durchzuführende Lehrveranstaltungen</div>
+                
+                <table id="lehrveranstaltungen">
+                    <thead>
+                        <tr>
+                            <th>Ifd. Nr.</th>
+                            <th>Fak</th>
+                            <th>Stg.</th>
+                            <th>FS</th>
+                            <th>Gruppen</th>
+                            <th>Modulnr./ LE</th>
+                            <th>Modulname (Kürzel)</th>
+                            <th colspan="3">Reale SWS (Präsenz)</th>
+                            <th>Digital</th>
+                            <th>Bemerkung</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th>V</th>
+                            <th>S</th>
+                            <th>P</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+                
+                <div class="notes">
+                    <p>Reale SWS = tatsächlich zu realisierende SWS</p>
+                    <p>Beispiel: 2 SWS Seminar für 5 SG BIB einzeln durchgeführt ergibt 10 zu realisierende SWS</p>
+                    <p>oder</p>
+                    <p>2 SWS Vorlesung für 5 SG BIB, in 2 Blöcken mit jeweils 3 bzw. 2 SG durchgeführt, ergibt 4 zu realisierende SWS</p>
+                    <p>Zu jedem aufgeführten Modul/Teilmodul muss ein Zuarbeitsbogen ausgefüllt werden.</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Hinweise zum Stundenplan:</div>
+                <ul>
+                    <li>Wahlobligatorische Veranstaltungen werden in der ersten Planungsrunde geplant, wenn die Zahl der teilnehmenden Studenten vorliegt und größer als 9 ist. Fakultative und restliche wahlobligatorische Veranstaltungen werden nach Fertigstellung der Pläne in Absprache mit der Fakultät eingefügt.</li>
+                    <li>Da Doppelplanung der Dozenten nicht möglich ist, ist es notwendig, die Lehrkraft zu benennen, die die Lehrveranstaltung wirklich durchführt (z.B. Seminarleiter, Praktikumsbetreuer).</li>
+                </ul>
+                
+                <div class="section-title">Lehrformen: Präsenz (mit digitalen Anteilen, wenn didaktisch vorteilhaft)</div>
+                <ul>
+                    <li>Regelfall: Präsenz (es wird empfohlen, bei Bedarf eine virtuelle Teilnahme zu ermöglichen (hybride LV))</li>
+                    <li>Digital synchron (Wegezeiten für Studierende beachten)</li>
+                    <li>Digital asynchron</li>
+                </ul>
+                
+                <div class="section-title">Digitale Lehre steht unter dem Genehmigungsvorbehalt des Dekans und bedarf der vorherigen Vorlage eines Lehrkonzeptes.</div>
+                <div class="section-title">Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen. Für die Genehmigung und Anrechnung auf das Lehrdeputat sind Mindeststandards zu beachten (siehe Hinweise zu digitaler Lehre an der HTWK Leipzig, Kapitel 4.1).</div>
+                <div class="section-title">Ferner steht jedwede digitale Lehre unter dem Ermöglichungsvorbehalt der Stunden- und Raumplanung.</div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)</div>
+                    <div class="form-input">Die gewünschten Dozenten- und Forschungstage sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen. Nach Prüfung werden diese zentral an DS übermittelt.</div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">Notwendige Sperrzeiten sind: (nur bei Gästen und Teilzeit!)</div>
+                    <div class="form-input">Die notwendigen Sperrzeiten sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen. Nach Prüfung werden diese zentral an DS übermittelt.</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="two-columns">
+                    <div class="column">
+                        <div class="section-title">Bei Bedarf vom Dozenten auszufüllen</div>
+                        <div>Wichtige Hinweise zur Semesterplanung: <span class="form-input" id="hinweise"></span></div>
+                        <div style="height: 30mm;"></div>
+                    </div>
+                    <div class="column">
+                        <div class="section-title">Nur vom Dekanat / Studienamt auszufüllen!</div>
+                        <div>Hinweise bei Rückgabe an den Dozenten:</div>
+                        <div style="height: 30mm;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="signature-area">
+                <div class="signature-box">Datum, Unterschrift<br>Verantwortlicher Dozent/in</div>
+                <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
+            </div>
+        </div>
+
+        <!-- Page 2 - Anlage 1 -->
+        <div class="container page-break">
+            <div class="header">
+                <h1>HTWK Leipzig<br>DS</h1>
+                <h2>Anlage 1 zum Dozentenblatt</h2>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Titel</div>
+                    <div class="form-input" style="width: 20mm;" id="anlage-titel"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Vorname</div>
+                    <div class="form-input" style="flex-grow: 1;" id="anlage-vorname"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Name</div>
+                    <div class="form-input" style="flex-grow: 1;" id="anlage-nachname"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Regelmäßig mögliche Einsatzzeiten für externe Dozenten sind:</div>
+                <table class="time-table" id="einsatzzeiten">
+                    <thead>
+                        <tr>
+                            <th colspan="3">Zeitangabe</th>
+                            <th>Anmerkung</th>
+                        </tr>
+                        <tr>
+                            <th>Wochen</th>
+                            <th>Wochentag</th>
+                            <th>Uhrzeit</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Notwendige regelmäßige Sperrzeiten für interne Dozenten sind:</div>
+                <table class="time-table" id="sperrzeiten">
+                    <thead>
+                        <tr>
+                            <th colspan="3">Zeitangabe</th>
+                            <th>Begründung</th>
+                        </tr>
+                        <tr>
+                            <th>Wochen</th>
+                            <th>Wochentag</th>
+                            <th>Uhrzeit</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)</div>
+                <table class="time-table">
+                    <thead>
+                        <tr>
+                            <th>Tag ist egal</th>
+                            <th>Montag</th>
+                            <th>Dienstag</th>
+                            <th>Mittwoch</th>
+                            <th>Donnerstag</th>
+                            <th>Freitag</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="6">aber nicht: <span class="form-input" style="width: 100mm;"></span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="notes">
+                    <p>Hinweis: D – Dozententag; F – Forschungstag → jeweils nur einmal auswählen!</p>
+                </div>
+            </div>
+
+            <div class="signature-area">
+                <div class="signature-box">Datum, Unterschrift<br>Verantwortlicher Dozent/in</div>
+                <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
+            </div>
+        </div>
+        `;
+
+        // Insert the form HTML into the container
+        document.getElementById('form-container').innerHTML = formHTML;
+
+        // Function to reset the form
+        function resetForm() {
+            document.getElementById('form-container').innerHTML = formHTML;
+            document.getElementById('rdf-input').value = '';
+            setupEventListeners();
+        }
+
+        // Function to setup event listeners
+        function setupEventListeners() {
+            document.getElementById('parse-btn').addEventListener('click', parseRDF);
+            document.getElementById('generate-pdf').addEventListener('click', generatePDF);
+            document.getElementById('reset-form').addEventListener('click', resetForm);
+        }
+
+        // Initialize event listeners
+        setupEventListeners();
+
+        function parseRDF() {
+            const ttlData = document.getElementById('rdf-input').value;
+            
+            if (!ttlData.trim()) {
+                alert('Bitte RDF-Daten eingeben!');
+                return;
+            }
+
+            try {
+                // Simple Turtle parser for this specific use case
+                const data = {
+                    titel: '',
+                    vorname: '',
+                    nachname: '',
+                    fakultaet: '',
+                    arbeitszeit: '',
+                    email: '',
+                    telefon: '',
+                    lehrveranstaltungen: []
+                };
+
+                let currentLV = null;
+                const lines = ttlData.split('\n');
+                
+                for (let line of lines) {
+                    line = line.trim();
+                    if (!line || line.startsWith('@prefix') || line.startsWith('#')) continue;
+
+                    if (line.includes('ex:lehrveranstaltung [')) {
+                        currentLV = {};
+                        data.lehrveranstaltungen.push(currentLV);
+                    } 
+                    else if (line.endsWith(';') || line.endsWith('.')) {
+                        const lineEnd = line.endsWith(';') ? line.length - 1 : line.length;
+                        const parts = line.substring(0, lineEnd).split(/\s+/);
+                        
+                        if (parts.length >= 2) {
+                            const prop = parts[0];
+                            let value = parts.slice(1).join(' ').trim();
+                            
+                            // Remove quotes if present
+                            if (value.startsWith('"') && value.endsWith('"')) {
+                                value = value.substring(1, value.length - 1);
+                            }
+                            // Remove angle brackets if present
+                            else if (value.startsWith('<') && value.endsWith('>')) {
+                                value = value.substring(1, value.length - 1);
+                            }
+
+                            if (currentLV) {
+                                // Lehrveranstaltung property
+                                currentLV[prop] = value;
+                            } else {
+                                // Main dozent property
+                                if (prop === 'ex:titel') data.titel = value;
+                                else if (prop === 'ex:vorname') data.vorname = value;
+                                else if (prop === 'ex:nachname') data.nachname = value;
+                                else if (prop === 'ex:fakultaet') {
+                                    // Extract the short form (after last / or #)
+                                    const parts = value.split(/[\/#]/);
+                                    data.fakultaet = parts[parts.length - 1];
+                                }
+                                else if (prop === 'ex:arbeitszeit') data.arbeitszeit = value;
+                                else if (prop === 'ex:email') data.email = value;
+                                else if (prop === 'ex:telefon') data.telefon = value;
+                            }
+                        }
+                    }
+                }
+
+                // Fill the form with extracted data
+                document.getElementById('titel').textContent = data.titel;
+                document.getElementById('vorname').textContent = data.vorname;
+                document.getElementById('nachname').textContent = data.nachname;
+                document.getElementById('email').textContent = data.email;
+                document.getElementById('telefon').textContent = data.telefon;
+                
+                // Also fill the Anlage 1 fields
+                document.getElementById('anlage-titel').textContent = data.titel;
+                document.getElementById('anlage-vorname').textContent = data.vorname;
+                document.getElementById('anlage-nachname').textContent = data.nachname;
+
+                // Set faculty checkbox
+                if (data.fakultaet) {
+                    const checkboxes = document.querySelectorAll('#fakultaet-group input');
+                    checkboxes.forEach(cb => {
+                        if (cb.value === data.fakultaet.toUpperCase()) {
+                            cb.checked = true;
+                        }
+                    });
+                }
+
+                // Set work time
+                if (data.arbeitszeit === 'Vollzeit') {
+                    document.getElementById('fulltime').checked = true;
+                } else if (data.arbeitszeit === 'Teilzeit') {
+                    document.getElementById('parttime').checked = true;
+                }
+
+                // Fill Lehrveranstaltungen table
+                const tbody = document.querySelector('#lehrveranstaltungen tbody');
+                tbody.innerHTML = ''; // Clear existing rows
+
+                data.lehrveranstaltungen.forEach(lv => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${lv['ex:ifdNr'] || ''}</td>
+                        <td>${lv['ex:fak'] || ''}</td>
+                        <td>${lv['ex:stg'] || ''}</td>
+                        <td>${lv['ex:fs'] || ''}</td>
+                        <td>${lv['ex:gruppen'] || ''}</td>
+                        <td>${lv['ex:modulnr'] || ''}</td>
+                        <td>${lv['ex:modulname'] || ''}</td>
+                        <td>${lv['ex:v'] || ''}</td>
+                        <td>${lv['ex:s'] || ''}</td>
+                        <td>${lv['ex:p'] || ''}</td>
+                        <td>${lv['ex:digital'] || ''}</td>
+                        <td>${lv['ex:bemerkung'] || ''}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                alert('Formular erfolgreich aus RDF-Daten gefüllt!');
+            } catch (error) {
+                console.error('Error parsing RDF:', error);
+                alert('Fehler beim Parsen der RDF-Daten: ' + error.message);
+            }
+        }
+
+        function generatePDF() {
+            const element = document.getElementById('form-container');
+            const opt = {
+                margin: 10,
+                filename: 'dozentenblatt.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2,
+                    width: 210 * 3.78, // Convert mm to pixels (210mm is A4 width)
+                    height: element.scrollHeight,
+                    windowWidth: element.scrollWidth
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait' 
+                }
+            };
+            
+            // Generate PDF
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>

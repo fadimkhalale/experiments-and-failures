@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTWK PDF Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .filter-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .filter-group {
+            flex: 1;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .pdf-list {
+            margin-top: 20px;
+        }
+        .pdf-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .pdf-item:hover {
+            background-color: #f9f9f9;
+        }
+        .pdf-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .pdf-type {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .dozentenblatt {
+            background-color: #ffeb3b;
+            color: #000;
+        }
+        .zuarbeitsblatt {
+            background-color: #4caf50;
+            color: white;
+        }
+        .pdf-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .pdf-actions button {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .view-btn {
+            background-color: #2196F3;
+        }
+        .download-btn {
+            background-color: #ff9800;
+        }
+        .delete-btn {
+            background-color: #f44336;
+        }
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            height: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="https://upload.wikimedia.org/wikipedia/de/1/16/HTWK-Logo.svg" alt="HTWK Logo">
+        </div>
+        
+        <h1>PDF Dokumenten Manager</h1>
+        
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="document-type">Dokumenttyp</label>
+                <select id="document-type">
+                    <option value="all">Alle Dokumente</option>
+                    <option value="dozentenblatt">Dozentenblatt</option>
+                    <option value="zuarbeitsblatt">Zuarbeitsblatt</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="prof-name">Professor:in Name</label>
+                <input type="text" id="prof-name" placeholder="Nach Namen suchen...">
+            </div>
+            
+            <div class="filter-group">
+                <label for="semester">Semester</label>
+                <select id="semester">
+                    <option value="all">Alle Semester</option>
+                    <option value="Wintersemester 2025/26">Wintersemester 2025/26</option>
+                    <option value="Sommersemester 2026">Sommersemester 2026</option>
+                </select>
+            </div>
+            
+            <button id="filter-btn">Filtern</button>
+            <button id="reset-btn">Zurücksetzen</button>
+        </div>
+        
+        <div class="pdf-list" id="pdf-list">
+            <!-- PDF items will be added dynamically -->
+            <div class="no-results">Keine Dokumente gefunden. Bitte Filter anpassen.</div>
+        </div>
+    </div>
+
+    <script>
+        // Sample PDF data - in a real application this would come from a server
+        const pdfData = [
+            { 
+                id: 1,
+                name: "Dozentenblatt_Mustermann_Wintersemester2025-26.pdf",
+                type: "dozentenblatt",
+                profName: "Mustermann",
+                semester: "Wintersemester 2025/26",
+                date: "15.05.2025",
+                size: "245 KB"
+            },
+            { 
+                id: 2,
+                name: "Zuarbeitsblatt_Mustermann_Wintersemester2025-26.pdf",
+                type: "zuarbeitsblatt",
+                profName: "Mustermann",
+                semester: "Wintersemester 2025/26",
+                date: "16.05.2025",
+                size: "320 KB"
+            },
+            { 
+                id: 3,
+                name: "Dozentenblatt_Schmidt_Sommersemester2026.pdf",
+                type: "dozentenblatt",
+                profName: "Schmidt",
+                semester: "Sommersemester 2026",
+                date: "20.05.2025",
+                size: "210 KB"
+            },
+            { 
+                id: 4,
+                name: "Zuarbeitsblatt_Schmidt_Sommersemester2026.pdf",
+                type: "zuarbeitsblatt",
+                profName: "Schmidt",
+                semester: "Sommersemester 2026",
+                date: "21.05.2025",
+                size: "290 KB"
+            },
+            { 
+                id: 5,
+                name: "Dozentenblatt_Mueller_Wintersemester2025-26.pdf",
+                type: "dozentenblatt",
+                profName: "Müller",
+                semester: "Wintersemester 2025/26",
+                date: "18.05.2025",
+                size: "230 KB"
+            }
+        ];
+
+        // Function to render PDF list based on filters
+        function renderPdfList(filteredData) {
+            const pdfList = document.getElementById('pdf-list');
+            pdfList.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                pdfList.innerHTML = '<div class="no-results">Keine Dokumente gefunden. Bitte Filter anpassen.</div>';
+                return;
+            }
+
+            filteredData.forEach(pdf => {
+                const pdfItem = document.createElement('div');
+                pdfItem.className = 'pdf-item';
+                
+                pdfItem.innerHTML = `
+                    <div class="pdf-info">
+                        <span class="pdf-type ${pdf.type}">
+                            ${pdf.type === 'dozentenblatt' ? 'Dozentenblatt' : 'Zuarbeitsblatt'}
+                        </span>
+                        <span><strong>${pdf.profName}</strong> - ${pdf.semester}</span>
+                        <span>${pdf.date} (${pdf.size})</span>
+                    </div>
+                    <div class="pdf-actions">
+                        <button class="view-btn" data-id="${pdf.id}">Ansehen</button>
+                        <button class="download-btn" data-id="${pdf.id}">Download</button>
+                        <button class="delete-btn" data-id="${pdf.id}">Löschen</button>
+                    </div>
+                `;
+                
+                pdfList.appendChild(pdfItem);
+            });
+
+            // Add event listeners to buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', () => viewPdf(btn.dataset.id));
+            });
+            
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', () => downloadPdf(btn.dataset.id));
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => deletePdf(btn.dataset.id));
+            });
+        }
+
+        // Filter function
+        function filterPdfs() {
+            const docType = document.getElementById('document-type').value;
+            const profName = document.getElementById('prof-name').value.toLowerCase();
+            const semester = document.getElementById('semester').value;
+
+            let filtered = pdfData;
+
+            if (docType !== 'all') {
+                filtered = filtered.filter(pdf => pdf.type === docType);
+            }
+
+            if (profName) {
+                filtered = filtered.filter(pdf => 
+                    pdf.profName.toLowerCase().includes(profName) || 
+                    pdf.name.toLowerCase().includes(profName)
+                );
+            }
+
+            if (semester !== 'all') {
+                filtered = filtered.filter(pdf => pdf.semester === semester);
+            }
+
+            renderPdfList(filtered);
+        }
+
+        // PDF actions
+        function viewPdf(id) {
+            const pdf = pdfData.find(p => p.id == id);
+            if (pdf) {
+                alert(`PDF ${pdf.name} würde jetzt in einem neuen Tab geöffnet werden.`);
+                // In a real app: window.open(`/pdf-viewer.html?file=${encodeURIComponent(pdf.name)}`, '_blank');
+            }
+        }
+
+        function downloadPdf(id) {
+            const pdf = pdfData.find(p => p.id == id);
+            if (pdf) {
+                alert(`PDF ${pdf.name} würde jetzt heruntergeladen werden.`);
+                // In a real app: 
+                // const link = document.createElement('a');
+                // link.href = `/pdfs/${encodeURIComponent(pdf.name)}`;
+                // link.download = pdf.name;
+                // link.click();
+            }
+        }
+
+        function deletePdf(id) {
+            if (confirm('Möchten Sie dieses Dokument wirklich löschen?')) {
+                alert(`PDF mit ID ${id} würde jetzt gelöscht werden.`);
+                // In a real app: 
+                // fetch(`/api/pdfs/${id}`, { method: 'DELETE' })
+                // .then(() => filterPdfs());
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set up event listeners
+            document.getElementById('filter-btn').addEventListener('click', filterPdfs);
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                document.getElementById('document-type').value = 'all';
+                document.getElementById('prof-name').value = '';
+                document.getElementById('semester').value = 'all';
+                filterPdfs();
+            });
+
+            // Initial render
+            renderPdfList(pdfData);
+        });
+
+        // This function would be called from your generator page when a PDF is created
+        // In a real app, this would be handled by the server
+        function addNewPdf(pdfName, pdfType, profName, semester) {
+            const newPdf = {
+                id: pdfData.length + 1,
+                name: pdfName,
+                type: pdfType,
+                profName: profName,
+                semester: semester,
+                date: new Date().toLocaleDateString('de-DE'),
+                size: Math.round(Math.random() * 200 + 100) + ' KB'
+            };
+            
+            pdfData.unshift(newPdf);
+            renderPdfList(pdfData);
+            
+            // Scroll to top to show the new PDF
+            window.scrollTo(0, 0);
+        }
+
+        // Example of how to call addNewPdf from your generator page:
+        // addNewPdf("Dozentenblatt_Mustermann_Wintersemester2025-26.pdf", 
+        //           "dozentenblatt", "Mustermann", "Wintersemester 2025/26");
+    </script>
+</body>
+</html>
