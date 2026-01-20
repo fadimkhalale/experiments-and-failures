@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    # Sagt Compose, dass das Image aus dem 'Dockerfile'
+    # im aktuellen Verzeichnis gebaut werden soll.
+    build: .
+    
+    # Name des Containers (optional, aber praktisch)
+    container_name: htwk-formular-generator
+    
+    # Port-Mapping:
+    # Leitet Port 3000 auf deinem Computer (links)
+    # zu Port 3000 im Container (rechts)
+    ports:
+      - "3000:3000"
+      
+    # Volumes (Das ist der wichtigste Teil!):
+    # Hier werden deine lokalen Dateien/Ordner mit dem
+    # Container verbunden, damit Daten persistent bleiben.
+    volumes:
+      # 1. Deine config.json wird in den Container gemountet.
+      #    Wichtig, damit der Server beim Start Passwörter hashen
+      #    und Backups schreiben kann (falls nötig).
+      - ./config.json:/usr/src/app/config.json
+      
+      # 2. Dein 'data'-Ordner wird verbunden.
+      #    Alle JSON-Dateien, die der Server liest oder schreibt,
+      #    landen so direkt auf deinem Host-Computer.
+      - ./data:/usr/src/app/data
+      
+    # Startet den Container automatisch neu, falls er abstürzt.
+    restart: unless-stopped

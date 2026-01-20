@@ -367,6 +367,54 @@ const formHTML = `
 						</div>
 				</div>
 				`;
+        // Checkbox-Berechtigungen basierend auf Benutzerrolle
+function setupApprovalPermissions() {
+  fetch('/check-auth')
+    .then(response => response.json())
+    .then(data => {
+      if (data.authenticated) {
+        const userRole = data.user.role;
+        const roleCheckboxes = {
+          'Dekan': 'checkbox-dekan',
+          'Studienamt': 'checkbox-studienamt', 
+          'Studiendekan': 'checkbox-studiendekan'
+        };
+
+        // Deaktiviere alle Checkboxen zunächst
+        Object.values(roleCheckboxes).forEach(checkboxId => {
+          const checkbox = document.getElementById(checkboxId);
+          if (checkbox) {
+            checkbox.disabled = true;
+            checkbox.checked = false;
+          }
+        });
+
+        // Aktiviere nur die Checkbox der eigenen Rolle
+        if (roleCheckboxes[userRole]) {
+          const userCheckbox = document.getElementById(roleCheckboxes[userRole]);
+          if (userCheckbox) {
+            userCheckbox.disabled = false;
+            
+            // Füge Label-Hinweis hinzu
+            const label = userCheckbox.parentElement;
+            if (label) {
+              label.style.fontWeight = 'bold';
+              label.title = `Sie können nur Ihre eigene Rolle (${userRole}) bestätigen`;
+            }
+          }
+        }
+
+        // Zeige aktuelle Rolle an
+        const statusDiv = document.getElementById('approval-status');
+        if (statusDiv) {
+          statusDiv.innerHTML += `<br><small>Angemeldet als: <strong>${userRole}</strong> - Sie können nur Ihre eigene Rolle bestätigen</small>`;
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Fehler beim Abrufen der Benutzerrolle:', error);
+    });
+}
 document.getElementById("form-container").innerHTML = formHTML;
 function resetForm() {
   document.getElementById("form-container").innerHTML = formHTML;
@@ -1189,7 +1237,7 @@ function generatePDF() {
   html2pdf().set(opt).from(element).save();
 }
 
-// Update event listener setup
+// Update event listener Einrichtung
 function setupEventListeners() {
   document.getElementById("parse-btn").addEventListener("click", parseJSON);
   document
@@ -1198,7 +1246,7 @@ function setupEventListeners() {
   document.getElementById("reset-form").addEventListener("click", resetForm);
 }
 
-// Update example button for Zuarbeitsblatt
+// Update Beispiel button for Zuarbeitsblatt
 document.addEventListener("DOMContentLoaded", () => {
   const exampleBtn = document.getElementById("example-btn");
   if (exampleBtn) {
@@ -1263,29 +1311,32 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // frontend: dynamisches Laden / Übernehmen gespeicherter JSONs
-(async function initSavedJsonUI() {
-  const select = document.getElementById('saved-dozenten');
-  const input = document.getElementById('dozenten-input');
+(async function initSavedZuarbeitUI() {
+  const select = document.getElementById('saved-dozenten'); // ACHTUNG: Dies ist der alte Name für Zuarbeitsblätter
+  const input = document.getElementById('dozenten-input'); // ACHTUNG: Dies ist der alte Name
   const loadBtn = document.getElementById('load-saved-btn');
   const refreshBtn = document.getElementById('refresh-saved-btn');
   const rdfTextarea = document.getElementById('rdf-input');
 
+  // Ändere die ID-Zuordnung in der HTML oder benenne die Elemente um
+  // Für jetzt verwende ich die vorhandenen Elemente aber mit type=zuarbeit
+
   async function fetchList() {
     try {
-      const r = await fetch('/api/json-list');
+      const r = await fetch('/api/json-list?type=zuarbeit');
       const list = await r.json();
       return list;
     } catch (err) {
-      console.error('Fehler beim Laden der Liste', err);
+      console.error('Fehler beim Laden der Zuarbeitsliste', err);
       return [];
     }
   }
 
   function populateSelect(list) {
-    // clear existing options except the first placeholder
+    if (!select) return;
+    
     select.innerHTML = '<option value="">-- keine ausgewählt --</option>';
     for (const item of list) {
-      // use ID as shown name (as requested) but keep filename as value
       const opt = document.createElement('option');
       opt.value = item.filename;
       opt.textContent = item.id;
@@ -1298,16 +1349,16 @@ document.addEventListener("DOMContentLoaded", () => {
     populateSelect(list);
   }
 
-  // initial load
+  // Initial laden
   refreshList();
 
-  // refresh button
+  // Refresh button
   refreshBtn?.addEventListener('click', (e) => {
     e.preventDefault();
     refreshList();
   });
 
-  // load button: determine source (select value / input value) and load JSON into rdf-input
+  // Laden button für Zuarbeitsblätter
   loadBtn?.addEventListener('click', async (e) => {
     e.preventDefault();
     const selectedFilename = select.value;
@@ -1317,43 +1368,147 @@ document.addEventListener("DOMContentLoaded", () => {
       let data = null;
 
       if (selectedFilename) {
-        // load by filename
         const r = await fetch('/api/json-file/' + encodeURIComponent(selectedFilename));
         if (!r.ok) throw new Error('Datei konnte nicht geladen werden');
         data = await r.json();
       } else if (typed) {
-        // try to load by ID first
         const r = await fetch('/api/json-by-id/' + encodeURIComponent(typed));
         if (r.ok) {
           const j = await r.json();
-          // endpoint returns { filename, data }
           data = j.data || j;
         } else {
-          // fallback: user typed a filename (with or without .json)
           let tryName = typed.endsWith('.json') ? typed : typed + '.json';
+          tryName = path.join('Zuarbeitsblätter', tryName);
           const r2 = await fetch('/api/json-file/' + encodeURIComponent(tryName));
           if (r2.ok) data = await r2.json();
-          else throw new Error('Keine passende Datei/ID gefunden');
+          else throw new Error('Keine passende Zuarbeits-Datei/ID gefunden');
         }
       } else {
-        alert('Bitte eine Datei auswählen oder eine ID eingeben.');
+        alert('Bitte eine Zuarbeits-Datei auswählen oder eine ID eingeben.');
         return;
       }
 
-      // put pretty-printed JSON into textarea
       rdfTextarea.value = JSON.stringify(data, null, 2);
+      
+      try { 
+        if (typeof renderApprovalStatusFromObject === 'function') 
+          renderApprovalStatusFromObject(data); 
+      } catch(e) { 
+        console.warn('renderApprovalStatusFromObject error', e); 
+      }
 
-      // optional: trigger any parsing/display logic you already have
-      // z.B. parseBtn.click() falls du das automatisch füllen möchtest
-      // document.getElementById('parse-btn')?.click();
+      // Automatically switch to Zuarbeitsblatt template if needed
+      if (window.currentTemplate !== "zuarbeit") {
+        document.getElementById("switch-template-btn").click();
+      }
 
     } catch (err) {
       console.error(err);
-      alert('Fehler beim Laden der JSON: ' + (err.message || err));
+      alert('Fehler beim Laden der Zuarbeits-JSON: ' + (err.message || err));
     }
   });
 })();
 
+(async function initSavedDozentenUI() {
+  const select = document.getElementById('saved-dozenten');
+  const input = document.getElementById('dozenten-input');
+  const loadBtn = document.getElementById('load-saved-dozenten-btn');
+  const refreshBtn = document.getElementById('refresh-saved-dozenten-btn');
+  const rdfTextarea = document.getElementById('rdf-input');
+
+  async function fetchList() {
+    try {
+      const r = await fetch('/api/json-list?type=dozent');
+      const list = await r.json();
+      return list;
+    } catch (err) {
+      console.error('Fehler beim Laden der Dozentenliste', err);
+      return [];
+    }
+  }
+
+  function populateSelect(list) {
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">-- keine ausgewählt --</option>';
+    for (const item of list) {
+      const opt = document.createElement('option');
+      opt.value = item.filename;
+      opt.textContent = item.id;
+      select.appendChild(opt);
+    }
+  }
+
+  async function refreshList() {
+    const list = await fetchList();
+    populateSelect(list);
+  }
+
+  // Initial laden
+  refreshList();
+
+  // Refresh button
+  refreshBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    refreshList();
+  });
+
+  // Laden button für Dozenten
+  loadBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const selectedFilename = select.value;
+    const typed = (input.value || '').trim();
+
+    try {
+      let data = null;
+
+      if (selectedFilename) {
+        // Laden by filename
+        const r = await fetch('/api/json-file/' + encodeURIComponent(selectedFilename));
+        if (!r.ok) throw new Error('Datei konnte nicht geladen werden');
+        data = await r.json();
+      } else if (typed) {
+        // Try to load by ID first
+        const r = await fetch('/api/json-by-id/' + encodeURIComponent(typed));
+        if (r.ok) {
+          const j = await r.json();
+          data = j.data || j;
+        } else {
+          // Fallback: Benutzer typed a filename
+          let tryName = typed.endsWith('.json') ? typed : typed + '.json';
+          // Füge den Dozentenblatt-Ordner hinzu
+          tryName = path.join('Dozentenblätter', tryName);
+          const r2 = await fetch('/api/json-file/' + encodeURIComponent(tryName));
+          if (r2.ok) data = await r2.json();
+          else throw new Error('Keine passende Dozenten-Datei/ID gefunden');
+        }
+      } else {
+        alert('Bitte eine Dozenten-Datei auswählen oder eine ID eingeben.');
+        return;
+      }
+
+      // Put pretty-printed JSON into textarea
+      rdfTextarea.value = JSON.stringify(data, null, 2);
+      
+      // Update approval status
+      try { 
+        if (typeof renderApprovalStatusFromObject === 'function') 
+          renderApprovalStatusFromObject(data); 
+      } catch(e) { 
+        console.warn('renderApprovalStatusFromObject error', e); 
+      }
+
+      // Automatically switch to Dozentenblatt template if needed
+      if (window.currentTemplate !== "dozent") {
+        document.getElementById("switch-template-btn").click();
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert('Fehler beim Laden der Dozenten-JSON: ' + (err.message || err));
+    }
+  });
+})();
 
 async function loadSelectedIntoTextarea() {
   const dozentSel = document.getElementById("saved-dozenten");
@@ -1405,9 +1560,164 @@ async function loadSelectedIntoTextarea() {
   }
 }
 
+
+
 // ----------------------
-// Approval-Status Render (automatisch eingefügt)
+// Speichere Genehmigungsstatus: Sende den Zustand der Checkboxen an den Server und aktualisiere das JSON/Statusfeld
 // ----------------------
+async function determineTargetFromUIOrTextarea() {
+  // Überprüfe zuerst Zuarbeitsblätter-UI
+  const selZuarbeit = document.getElementById('saved-dozenten'); // Altes Element für Zuarbeit
+  const inputZuarbeit = document.getElementById('dozenten-input'); // Altes Element für Zuarbeit
+  
+  // Überprüfe Dozentenblätter-UI  
+  const selDozent = document.getElementById('saved-dozenten'); // Neues Element für Dozenten
+  const inputDozent = document.getElementById('dozenten-input'); // Neues Element für Dozenten
+
+  const selectedZuarbeit = (selZuarbeit && selZuarbeit.value) ? selZuarbeit.value : null;
+  const typedZuarbeit = (inputZuarbeit && inputZuarbeit.value) ? inputZuarbeit.value.trim() : null;
+  
+  const selectedDozent = (selDozent && selDozent.value) ? selDozent.value : null;
+  const typedDozent = (inputDozent && inputDozent.value) ? inputDozent.value.trim() : null;
+
+  // Priorisiere Dozentenblätter wenn beide gesetzt sind
+  if (selectedDozent) {
+    return { filename: selectedDozent, id: null, type: 'dozent' };
+  }
+  if (typedDozent) {
+    return { filename: null, id: typedDozent, type: 'dozent' };
+  }
+  if (selectedZuarbeit) {
+    return { filename: selectedZuarbeit, id: null, type: 'zuarbeit' };
+  }
+  if (typedZuarbeit) {
+    return { filename: null, id: typedZuarbeit, type: 'zuarbeit' };
+  }
+
+  // Last resort: parse textarea
+  const ta = document.getElementById('rdf-input');
+  if (ta && ta.value.trim()) {
+    try {
+      const obj = JSON.parse(ta.value);
+      if (obj && (obj.ID || obj.id)) return { filename: null, id: obj.ID || obj.id, type: 'auto' };
+      if (obj.dozent) return { filename: null, id: obj.dozent.ID || obj.dozent.id || obj.dozent.nachname, type: 'dozent' };
+      if (obj.modul) return { filename: null, id: obj.modul.ID || obj.modul.id || obj.modul.modulnr, type: 'zuarbeit' };
+    } catch (e) { /* ignore */ }
+  }
+
+  return { filename: null, id: null, type: 'auto' };
+}
+
+async function saveApprovalToServer() {
+  try {
+    const userRole = await getUserRole(); // Neue Funktion zur Rollenabfrage
+    
+    if (!userRole) {
+      alert('Fehler: Benutzerrolle konnte nicht ermittelt werden.');
+      return;
+    }
+
+    const roleCheckboxes = {
+      'Dekan': 'checkbox-dekan',
+      'Studienamt': 'checkbox-studienamt',
+      'Studiendekan': 'checkbox-studiendekan'
+    };
+
+    const userCheckboxId = roleCheckboxes[userRole];
+    if (!userCheckboxId) {
+      alert('Ihre Rolle hat keine Berechtigung zum Bestätigen von Freigaben.');
+      return;
+    }
+
+    const userCheckbox = document.getElementById(userCheckboxId);
+    if (!userCheckbox) {
+      alert('Checkbox für Ihre Rolle nicht gefunden.');
+      return;
+    }
+
+    // Nur die eigene Rolle senden
+    const approvals = {
+      [userRole]: userCheckbox.checked ? 'ja' : 'nein'
+    };
+
+    // Bestimme Ziel (existierender Code)
+    let target = await determineTargetFromUIOrTextarea();
+
+    // Fallback-Logik (existierender Code)
+    if (!target || (!target.filename && !target.id)) {
+      const ta = document.getElementById('rdf-input');
+      if (ta && ta.value.trim()) {
+        try {
+          const parsed = JSON.parse(ta.value);
+          // ... (existierender Code)
+        } catch (e) { /* ignore */ }
+      }
+    }
+
+    if (!target || (!target.filename && !target.id)) {
+      return alert('Konnte Zieldatei nicht bestimmen. Wähle eine gespeicherte Datei aus oder gib eine ID ein.');
+    }
+
+    const payload = { filename: target.filename, id: target.id, approvals };
+
+    console.log('Saving approval for role:', userRole, payload);
+
+    const r = await fetch('/api/save-approval', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!r.ok) {
+      let txt;
+      try { txt = await r.text(); } catch (e) { txt = r.statusText || 'Fehler'; }
+      console.error('Server responded with error', r.status, txt);
+      return alert('Speichern fehlgeschlagen: ' + txt);
+    }
+
+    alert(`Freigabe als ${userRole} wurde gespeichert.`);
+
+    // Status aktualisieren
+    if (target.filename) {
+      try {
+        const r2 = await fetch('/api/json-file/' + encodeURIComponent(target.filename));
+        if (r2.ok) {
+          const obj = await r2.json();
+          renderApprovalStatusFromObject(obj);
+          document.getElementById('rdf-input').value = JSON.stringify(obj, null, 2);
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+  } catch (err) {
+    console.error('saveApprovalToServer error', err);
+    alert('Speichern fehlgeschlagen: ' + (err.message || err));
+  }
+}
+
+// Hilfsfunktion zur Rollenabfrage
+async function getUserRole() {
+  try {
+    const response = await fetch('/check-auth');
+    const data = await response.json();
+    return data.authenticated ? data.user.role : null;
+  } catch (error) {
+    console.error('Fehler beim Abrufen der Benutzerrolle:', error);
+    return null;
+  }
+}
+// bind speichern button if present
+document.addEventListener('DOMContentLoaded', function() {
+ setTimeout(() => {
+    setupApprovalPermissions();
+    renderApprovalStatusFromTextarea();
+  }, 500);
+
+  // Save-Button Event Listener
+  const saveBtn = document.getElementById('save-approval-btn');
+  if (saveBtn) saveBtn.addEventListener('click', saveApprovalToServer);
+});
+
 
 // rekursive Suche nach einem Objekt mit key 'approvals'
 function findApprovalsDeep(obj) {
@@ -1500,5 +1810,69 @@ function renderApprovalStatusFromTextarea() {
 // Versuche beim Laden einmal automatisch, falls textarea schon Inhalt hat
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(renderApprovalStatusFromTextarea, 200);
+});
+
+
+
+
+/* --------- Hinzugefügter Initialisierungs-Code (aus HTML entfernt) ---------
+   Dieser Block führt die Authentifizierungsprüfung durch, setzt den Benutzernamen
+   ins UI und hängt Event-Listener an Buttons (Abmelden, PDF-Manager, Template-Wechsel).
+   Kommentare nur auf Deutsch wie gewünscht.
+------------------------------------------------------------------------- */
+document.addEventListener('DOMContentLoaded', function () {
+  // Authentifizierungsprüfung: Anfrage an '/check-auth' senden
+  try {
+    fetch('/check-auth')
+      .then(function(response) { return response.json(); })
+      .then(function(data) {
+        if (!data.authenticated) {
+          // Bei fehlender Authentifizierung: Weiterleitung zur Login-Seite
+          window.location.href = '/login.html';
+        } else {
+          var cu = document.getElementById('currentUser');
+          if (cu) cu.textContent = data.user && data.user.role ? data.user.role : '';
+        }
+      })
+      .catch(function(error) {
+        console.error('Auth check failed:', error);
+        window.location.href = '/login.html';
+      });
+  } catch (e) {
+    console.error('Fehler bei Authentifizierungsprüfung:', e);
+  }
+
+  // Abmelden-Button: fetch an /Abmelden und Weiterleitung
+  var logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function () {
+      fetch('/logout').then(function() {
+        window.location.href = '/login.html';
+      }).catch(function(e) {
+        console.error('Fehler beim Logout:', e);
+      });
+    });
+  }
+
+  // PDF-Manager Button: Navigation zur Seite
+  var pdfBtn = document.getElementById('pdf-manager-btn');
+  if (pdfBtn) {
+    pdfBtn.addEventListener('click', function () {
+      window.location.href = 'pdf-manager.html';
+    });
+  }
+
+// Schaltfläche: Template-Wechsel (ruft switchTemplate() auf, falls vorhanden)
+  var switchBtn = document.getElementById('switch-template-btn');
+  if (switchBtn) {
+    switchBtn.addEventListener('click', function () {
+      if (typeof switchTemplate === 'function') {
+        try { switchTemplate(); } catch (e) { console.error(e); }
+      } else {
+        // Funktion nicht gefunden: nur loggen (keine Wirkung)
+        console.warn('switchTemplate() ist nicht definiert.');
+      }
+    });
+  }
 });
 
