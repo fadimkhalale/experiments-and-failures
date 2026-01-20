@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTWK PDF Manager</title>
+   <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .filter-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .filter-group {
+            flex: 1;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .pdf-list {
+            margin-top: 20px;
+        }
+        .pdf-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .pdf-item:hover {
+            background-color: #f9f9f9;
+        }
+        .pdf-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .pdf-type {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .dozentenblatt {
+            background-color: #ffeb3b;
+            color: #000;
+        }
+        .zuarbeitsblatt {
+            background-color: #4caf50;
+            color: white;
+        }
+        .pdf-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .pdf-actions button {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .view-btn {
+            background-color: #2196F3;
+        }
+        .download-btn {
+            background-color: #ff9800;
+        }
+        .delete-btn {
+            background-color: #f44336;
+        }
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            height: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="https://upload.wikimedia.org/wikipedia/de/1/16/HTWK-Logo.svg" alt="HTWK Logo">
+        </div>
+        
+        <h1>PDF Dokumenten Manager (Lokale Downloads)</h1>
+        
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="document-type">Dokumenttyp</label>
+                <select id="document-type">
+                    <option value="all">Alle Dokumente</option>
+                    <option value="dozentenblatt">Dozentenblatt</option>
+                    <option value="zuarbeitsblatt">Zuarbeitsblatt</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="prof-name">Professor:in Name</label>
+                <input type="text" id="prof-name" placeholder="Nach Namen suchen...">
+            </div>
+            
+            <div class="filter-group">
+                <label for="semester">Semester</label>
+                <select id="semester">
+                    <option value="all">Alle Semester</option>
+                    <option value="Wintersemester 2025/26">Wintersemester 2025/26</option>
+                    <option value="Sommersemester 2026">Sommersemester 2026</option>
+                </select>
+            </div>
+            
+            <button id="filter-btn">Filtern</button>
+            <button id="reset-btn">Zurücksetzen</button>
+            <button id="refresh-btn">Aktualisieren</button>
+        </div>
+        
+        <div class="pdf-list" id="pdf-list">
+            <div class="no-results">Keine Dokumente gefunden. Bitte Filter anpassen.</div>
+        </div>
+    </div>
+
+    <script>
+// Funktion zum Lesen der PDFs aus dem Download-Ordner
+async function getLocalPdfs() {
+  try {
+    // In einer echten Anwendung würden wir hier den Download-Ordner des Benutzers durchsuchen
+    // Da wir im Browser keine direkten Dateisystemzugriffe haben, simulieren wir dies mit localStorage
+    
+    // Simulierte PDF-Daten aus localStorage
+    const savedPdfs = JSON.parse(localStorage.getItem('htwk-pdfs') || '[]');
+    
+    // Aktuelle Downloads aus dem virtuellen "Download-Ordner" hinzufügen
+    const downloads = JSON.parse(localStorage.getItem('htwk-downloads') || '[]');
+    
+    // Kombiniere gespeicherte PDFs mit neuen Downloads
+    const allPdfs = [...downloads, ...savedPdfs];
+    
+    // Entferne Duplikate
+    const uniquePdfs = allPdfs.filter((pdf, index, self) =>
+      index === self.findIndex((p) => p.name === pdf.name)
+    );
+    
+    return uniquePdfs;
+  } catch (error) {
+    console.error('Fehler beim Lesen der PDFs:', error);
+    return [];
+  }
+}
+
+// Funktion zum Rendern der PDF-Liste
+async function renderPdfList(filteredData) {
+  const pdfList = document.getElementById('pdf-list');
+  pdfList.innerHTML = '';
+
+  if (filteredData.length === 0) {
+    pdfList.innerHTML = '<div class="no-results">Keine Dokumente gefunden. Bitte Filter anpassen.</div>';
+    return;
+  }
+
+  filteredData.forEach(pdf => {
+    const pdfItem = document.createElement('div');
+    pdfItem.className = 'pdf-item';
+    
+    pdfItem.innerHTML = `
+      <div class="pdf-info">
+        <span class="pdf-type ${pdf.type}">
+          ${pdf.type === 'dozentenblatt' ? 'Dozentenblatt' : 'Zuarbeitsblatt'}
+        </span>
+        <span><strong>${pdf.profName}</strong> - ${pdf.semester}</span>
+        <span>${pdf.date} (${pdf.size})</span>
+      </div>
+      <div class="pdf-actions">
+        <button class="view-btn" data-id="${pdf.id}">Ansehen</button>
+        <button class="download-btn" data-id="${pdf.id}">Download</button>
+        <button class="delete-btn" data-id="${pdf.id}">Löschen</button>
+      </div>
+    `;
+    
+    pdfList.appendChild(pdfItem);
+  });
+
+  // Event-Listener für Buttons hinzufügen
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => viewPdf(btn.dataset.id));
+  });
+  
+  document.querySelectorAll('.download-btn').forEach(btn => {
+    btn.addEventListener('click', () => downloadPdf(btn.dataset.id));
+  });
+  
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => deletePdf(btn.dataset.id));
+  });
+}
+
+// PDF-Funktionen
+async function viewPdf(id) {
+  const pdfs = await getLocalPdfs();
+  const pdf = pdfs.find(p => p.id == id);
+  if (pdf) {
+    // In einer echten Anwendung würden wir die PDF-Datei aus dem Download-Ordner öffnen
+    // Hier simulieren wir es mit einem neuen Tab
+    window.open(`data:application/pdf;base64,${pdf.data}`, '_blank');
+  }
+}
+
+async function downloadPdf(id) {
+  const pdfs = await getLocalPdfs();
+  const pdf = pdfs.find(p => p.id == id);
+  if (pdf) {
+    // In einer echten Anwendung würden wir die Datei aus dem Download-Ordner erneut herunterladen
+    // Hier simulieren wir es mit einem Daten-URL-Download
+    const link = document.createElement('a');
+    link.href = `data:application/pdf;base64,${pdf.data}`;
+    link.download = pdf.name;
+    link.click();
+  }
+}
+
+async function deletePdf(id) {
+  if (confirm('Möchten Sie dieses Dokument wirklich löschen?')) {
+    try {
+      // PDF aus dem virtuellen Download-Ordner entfernen
+      const pdfs = await getLocalPdfs();
+      const updatedPdfs = pdfs.filter(p => p.id != id);
+      
+      // In localStorage speichern
+      localStorage.setItem('htwk-downloads', JSON.stringify(updatedPdfs));
+      
+      // Liste aktualisieren
+      filterPdfs();
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+    }
+  }
+}
+
+// Filterfunktion
+async function filterPdfs() {
+  const docType = document.getElementById('document-type').value;
+  const profName = document.getElementById('prof-name').value.toLowerCase();
+  const semester = document.getElementById('semester').value;
+
+  const pdfs = await getLocalPdfs();
+
+  let filtered = pdfs;
+
+  if (docType !== 'all') {
+    filtered = filtered.filter(pdf => pdf.type === docType);
+  }
+
+  if (profName) {
+    filtered = filtered.filter(pdf => 
+      pdf.profName.toLowerCase().includes(profName) || 
+      pdf.name.toLowerCase().includes(profName)
+    );
+  }
+
+  if (semester !== 'all') {
+    filtered = filtered.filter(pdf => pdf.semester === semester);
+  }
+
+  renderPdfList(filtered);
+}
+
+// Initialisierung
+document.addEventListener('DOMContentLoaded', async () => {
+  // Event-Listener für Filter
+  document.getElementById('filter-btn').addEventListener('click', filterPdfs);
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    document.getElementById('document-type').value = 'all';
+    document.getElementById('prof-name').value = '';
+    document.getElementById('semester').value = 'all';
+    filterPdfs();
+  });
+  
+  document.getElementById('refresh-btn').addEventListener('click', filterPdfs);
+
+  // Initiale Anzeige
+  await filterPdfs();
+});
+</script>
+</body>
+</html>

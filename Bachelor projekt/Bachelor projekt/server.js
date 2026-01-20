@@ -1,118 +1,184 @@
+#!/usr/bin/env node
+// Korrigierte server.js — Admin-Login + Session-Schutz für Dozenten-RDF
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const session = require('express-session');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 
-// Middlewares
-app.use(express.static('public'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'change_this_in_prod',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 60 * 60 * 1000 } // 1 hour
+}));
 
-// GET /list - Gibt die Liste der PDFs aus dem Downloads-Ordner zurück
-app.get('/list', (req, res) => {
-  const downloadsPath = path.join(require('os').homedir(), 'Downloads');
-  
-  fs.readdir(downloadsPath, (err, files) => {
-    if (err) return res.status(500).send('Fehler beim Lesen der Dateien');
+// serve frontend static
+app.use(express.static(path.join(__dirname, 'public')));
 
-    const pdfs = files
-      .filter(name => name.endsWith('.pdf'))
-      .map(name => {
-        const stat = fs.statSync(path.join(downloadsPath, name));
-        const dozentenMatch = name.match(/Dozentenblatt_(.+)_(Wintersemester|Sommersemester)\d{4}/i);
-        const zuarbeitMatch = name.match(/Zuarbeitsblatt_(.+)_(Wintersemester|Sommersemester)\d{4}/i);
-        
-        let dozent = '', semester = '';
-        if (dozentenMatch) {
-          [, dozent, semester] = dozentenMatch;
-        } else if (zuarbeitMatch) {
-          [, dozent, semester] = zuarbeitMatch;
-        }
+// Simple admin credentials (development).
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'adminpass';
 
-        return {
-          name,
-          path: path.join(downloadsPath, name),
-          date: stat.mtime.toISOString().split('T')[0],
-          dozent,
-          semester,
-          type: dozentenMatch ? 'Dozentenblatt' : zuarbeitMatch ? 'Zuarbeitsblatt' : 'other'
-        };
-      });
+// --- auth endpoints ---
+app.post('/login', (req, res) => {
+  const { username, password } = req.body || {};
+  if (!username || !password) return res.status(400).json({ success: false, message: 'Missing username/password'});
 
-    res.json(pdfs);
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    req.session.isAdmin = true;
+    return res.json({ success: true });
+  }
+
+  return res.status(401).json({ success: false, message: 'Invalid credentials' });
+});
+
+app.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) return res.status(500).json({ success: false, message: 'Logout failed' });
+    res.json({ success: true });
   });
 });
 
-// GET /view - Zeigt eine PDF-Datei an
-app.get('/view', (req, res) => {
-  const filePath = req.query.path;
-  
-  if (!filePath) {
-    return res.status(400).send('Dateipfad fehlt');
-  }
+// helper
+function ensureAdmin(req, res, next) {
+  if (req.session && req.session.isAdmin) return next();
+  return res.status(401).send('Unauthorized');
+}
 
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send('Datei nicht gefunden');
-  }
+// utility to split TTL file into docs by '@prefix ex:' occurrences
+function findPrefixPositions(ttl) {
+  const re = /^\s*@prefix\s+ex:/gm;
+  const positions = [];
+  let m;
+  while ((m = re.exec(ttl)) !== null) positions.push(m.index);
+  return positions;
+}
 
-  if (!filePath.endsWith('.pdf')) {
-    return res.status(400).send('Nur PDF-Dateien sind erlaubt');
-  }
+// list available RDF entries
+app.get('/rdfs/list', (req, res) => {
+  const type = (req.query.type || 'all').toLowerCase();
+  const isAdmin = !!(req.session && req.session.isAdmin);
+  const fileMap = {
+    dozent: 'dozentenblatt.ttl',
+    zuarbeit: 'zuarbeitsblatt.ttl'
+  };
 
-  res.sendFile(filePath);
+  const filesToRead = (type === 'all') ? Object.values(fileMap) : (fileMap[type] ? [fileMap[type]] : []);
+  const results = [];
+
+  if (type === 'dozent' && !isAdmin) return res.status(401).send('Unauthorized');
+
+  filesToRead.forEach(filename => {
+    if (!isAdmin && filename.toLowerCase().includes('dozenten')) return; // hide dozenten when not admin (for 'all')
+    const full = path.join(DATA_DIR, filename);
+    if (!fs.existsSync(full)) return;
+    try {
+      const ttl = fs.readFileSync(full, 'utf8');
+      const prefixPositions = findPrefixPositions(ttl);
+      if (prefixPositions.length === 0) {
+        results.push({ id: null, name: filename, file: filename, type: filename.toLowerCase().includes('dozenten') ? 'dozent' : 'zuarbeit' });
+      } else {
+        prefixPositions.forEach((pos, idx) => {
+          const sliceStart = pos;
+          const nextPos = (idx + 1 < prefixPositions.length) ? prefixPositions[idx+1] : ttl.length;
+          const docText = ttl.slice(sliceStart, nextPos);
+          const idMatch = docText.match(/\n\s*ex:([A-Za-z0-9_\-]+)/);
+          // korrigierte Regex: suchen nach ex:... und dann einem Literal in Anführungszeichen
+          const nameMatch = docText.match(/ex:.*?\n\s*\S+\s+"([^"]+)"/);
+          const id = idMatch ? idMatch[1] : null;
+          const name = nameMatch ? nameMatch[1] : (filename + '#' + idx);
+          results.push({ id, name, file: filename + '::' + idx, type: filename.toLowerCase().includes('dozenten') ? 'dozent' : 'zuarbeit' });
+        });
+      }
+    } catch (err) {
+      console.error('Error reading', full, err.message);
+    }
+  });
+
+  res.json(results);
 });
 
-// POST /rename - Benennt eine Datei um
-app.post('/rename', (req, res) => {
-  const { oldPath, newName } = req.body;
-  
-  if (!oldPath || !newName) {
-    return res.status(400).json({ success: false, message: 'Alter Pfad und neuer Name erforderlich' });
-  }
-
-  if (!fs.existsSync(oldPath)) {
-    return res.status(404).json({ success: false, message: 'Datei nicht gefunden' });
-  }
-
-  if (!newName.endsWith('.pdf')) {
-    return res.status(400).json({ success: false, message: 'Neuer Name muss mit .pdf enden' });
-  }
-
-  const dir = path.dirname(oldPath);
-  const newPath = path.join(dir, newName);
+// fetch a document by file::docIndex or by id (ex:ID)
+app.get('/rdfs/get', (req, res) => {
+  const fileParam = req.query.file || null;
+  const id = req.query.id || null;
 
   try {
-    fs.renameSync(oldPath, newPath);
-    res.json({ success: true, newPath });
+    if (fileParam) {
+      const parts = fileParam.split('::');
+      const baseFile = parts[0];
+      const docIndexPart = parts.length > 1 ? parts[1] : undefined;
+      const safeFile = path.basename(baseFile);
+      const fullPath = path.join(DATA_DIR, safeFile);
+      if (!fs.existsSync(fullPath)) return res.status(404).send('File not found');
+
+      // block access to dozenten file unless admin
+      if (safeFile.toLowerCase() === 'dozentenblatt.ttl' && !(req.session && req.session.isAdmin)) {
+        return res.status(401).send('Unauthorized');
+      }
+
+      const ttl = fs.readFileSync(fullPath, 'utf8');
+      const prefixPositions = findPrefixPositions(ttl);
+
+      if (docIndexPart !== undefined && !isNaN(Number(docIndexPart))) {
+        const docIndex = Number(docIndexPart);
+        if (prefixPositions.length === 0) {
+          return res.type('text/plain').send(ttl.trim() + '\n');
+        }
+        if (docIndex < 0 || docIndex >= prefixPositions.length) return res.status(404).send('Dokumentindex nicht vorhanden');
+        const start = prefixPositions[docIndex];
+        const end = (docIndex + 1 < prefixPositions.length) ? prefixPositions[docIndex+1] : ttl.length;
+        const docText = ttl.slice(start, end).trim();
+        return res.type('text/plain').send(docText + '\n');
+      }
+
+      return res.type('text/plain').send(ttl.trim() + '\n');
+    }
+
+    if (id) {
+      const files = fs.readdirSync(DATA_DIR).filter(f => f.endsWith('.ttl'));
+      for (const f of files) {
+        const full = path.join(DATA_DIR, f);
+        const ttl = fs.readFileSync(full, 'utf8');
+        const idRe = new RegExp('(^|\\n)ex:' + id + '(?=\\s|\\.|;|\\[|$)', 'm');
+        const im = idRe.exec(ttl);
+        if (!im) continue;
+        if (f.toLowerCase().includes('dozenten') && !(req.session && req.session.isAdmin)) {
+          return res.status(401).send('Unauthorized');
+        }
+        const idPos = im.index + (im[1] ? im[1].length : 0);
+        const prefixPositions = findPrefixPositions(ttl);
+        let docStart = null;
+        for (let i = prefixPositions.length - 1; i >= 0; i--) {
+          if (prefixPositions[i] <= idPos) { docStart = prefixPositions[i]; break; }
+        }
+        if (docStart === null) {
+          return res.type('text/plain').send(ttl.trim() + '\n');
+        }
+        let docEnd = ttl.length;
+        for (let i = 0; i < prefixPositions.length; i++) {
+          if (prefixPositions[i] > docStart) { docEnd = prefixPositions[i]; break; }
+        }
+        const docText = ttl.slice(docStart, docEnd).trim();
+        return res.type('text/plain').send(docText + '\n');
+      }
+      return res.status(404).send('ID nicht gefunden');
+    }
+
+    return res.status(400).send('Bitte file oder id angeben');
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Fehler beim Umbenennen: ' + err.message });
+    console.error('rdfs/get error:', err);
+    return res.status(500).send('Serverfehler beim Lesen der TTL-Datei');
   }
 });
 
-// POST /delete - Löscht eine PDF-Datei
-app.post('/delete', (req, res) => {
-  const { path: filePath } = req.body;
-  
-  if (!filePath) {
-    return res.status(400).json({ success: false, message: 'Dateipfad fehlt' });
-  }
+// health
+app.get('/_health', (req, res) => res.json({ ok: true, admin: !!(req.session && req.session.isAdmin) }));
 
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ success: false, message: 'Datei nicht gefunden' });
-  }
-
-  if (!filePath.endsWith('.pdf')) {
-    return res.status(400).json({ success: false, message: 'Nur PDF-Dateien können gelöscht werden' });
-  }
-
-  try {
-    fs.unlinkSync(filePath);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Fehler beim Löschen: ' + err.message });
-  }
-});
-
-// Server starten
 app.listen(PORT, () => console.log(`Server läuft auf http://localhost:${PORT}`));

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTWK PDF Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .filter-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .filter-group {
+            margin-bottom: 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .pdf-list {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .pdf-header {
+            display: grid;
+            grid-template-columns: 150px 2fr 1fr 200px;
+            padding: 10px 15px;
+            background-color: #333;
+            color: white;
+            font-weight: bold;
+        }
+        .pdf-item {
+            display: grid;
+            grid-template-columns: 150px 2fr 1fr 200px;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            align-items: center;
+        }
+        .pdf-item:last-child {
+            border-bottom: none;
+        }
+        .pdf-item:hover {
+            background-color: #f9f9f9;
+        }
+        .pdf-type {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .dozentenblatt {
+            background-color: #ffeb3b;
+            color: #000;
+        }
+        .zuarbeitsblatt {
+            background-color: #4caf50;
+            color: white;
+        }
+        .pdf-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .pdf-actions button {
+            padding: 5px 10px;
+            font-size: 14px;
+            min-width: 80px;
+        }
+        .view-btn {
+            background-color: #2196F3;
+        }
+        .view-btn:hover {
+            background-color: #0b7dda;
+        }
+        .download-btn {
+            background-color: #ff9800;
+        }
+        .download-btn:hover {
+            background-color: #e68a00;
+        }
+        .delete-btn {
+            background-color: #f44336;
+        }
+        .delete-btn:hover {
+            background-color: #da190b;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            grid-column: 1 / -1;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            height: 60px;
+        }
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        @media (max-width: 768px) {
+            .pdf-header, .pdf-item {
+                grid-template-columns: 1fr;
+            }
+            .pdf-actions {
+                justify-content: center;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="https://upload.wikimedia.org/wikipedia/de/1/16/HTWK-Logo.svg" alt="HTWK Logo">
+        </div>
+        
+        <h1>PDF Dokumenten Manager</h1>
+        
+        <div id="status-message" class="status-message" style="display: none;"></div>
+        
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="document-type">Dokumenttyp</label>
+                <select id="document-type">
+                    <option value="all">Alle Dokumente</option>
+                    <option value="dozentenblatt">Dozentenblatt</option>
+                    <option value="zuarbeitsblatt">Zuarbeitsblatt</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="prof-name">Professor:in Name</label>
+                <input type="text" id="prof-name" placeholder="Nach Namen suchen...">
+            </div>
+            
+            <div class="filter-group">
+                <label for="semester">Semester</label>
+                <select id="semester">
+                    <option value="all">Alle Semester</option>
+                    <option value="Wintersemester 2025/26">Wintersemester 2025/26</option>
+                    <option value="Sommersemester 2026">Sommersemester 2026</option>
+                </select>
+            </div>
+            
+            <div class="filter-group" style="display: flex; align-items: flex-end;">
+                <button id="filter-btn">Filtern</button>
+                <button id="reset-btn" style="margin-left: 10px; background-color: #6c757d;">Zurücksetzen</button>
+            </div>
+        </div>
+        
+        <div class="pdf-list" id="pdf-list">
+            <div class="pdf-header">
+                <div>Typ</div>
+                <div>Details</div>
+                <div>Datum & Größe</div>
+                <div>Aktionen</div>
+            </div>
+            <div class="no-results">Lade PDF-Dokumente...</div>
+        </div>
+    </div>
+
+    <script>
+        // Statusmeldung anzeigen
+        function showMessage(message, isSuccess) {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${isSuccess ? 'success' : 'error'}`;
+            statusEl.style.display = 'block';
+            
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 5000);
+        }
+
+        // PDF-Liste vom Server laden
+        async function loadPdfList(filters = {}) {
+            try {
+                // Query-Parameter erstellen
+                const params = new URLSearchParams();
+                if (filters.type && filters.type !== 'all') params.append('type', filters.type);
+                if (filters.profName) params.append('profName', filters.profName);
+                if (filters.semester && filters.semester !== 'all') params.append('semester', filters.semester);
+                
+                const response = await fetch(`/api/get-pdfs?${params.toString()}`);
+                if (!response.ok) throw new Error('Fehler beim Laden der PDFs');
+                return await response.json();
+            } catch (error) {
+                console.error('Error loading PDFs:', error);
+                showMessage('Fehler beim Laden der PDF-Liste: ' + error.message, false);
+                return [];
+            }
+        }
+
+        // PDF-Liste anzeigen
+        function renderPdfList(pdfs) {
+            const pdfList = document.getElementById('pdf-list');
+            
+            // Header beibehalten
+            const header = pdfList.querySelector('.pdf-header');
+            pdfList.innerHTML = '';
+            pdfList.appendChild(header);
+            
+            if (pdfs.length === 0) {
+                pdfList.innerHTML += '<div class="no-results">Keine Dokumente gefunden. Bitte Filter anpassen.</div>';
+                return;
+            }
+            
+            pdfs.forEach(pdf => {
+                const pdfItem = document.createElement('div');
+                pdfItem.className = 'pdf-item';
+                
+                pdfItem.innerHTML = `
+                    <div>
+                        <span class="pdf-type ${pdf.type}">
+                            ${pdf.type === 'dozentenblatt' ? 'Dozentenblatt' : 'Zuarbeitsblatt'}
+                        </span>
+                    </div>
+                    <div>
+                        <strong>${pdf.profName || 'Unbekannt'}</strong><br>
+                        ${pdf.semester || 'Kein Semester angegeben'}
+                    </div>
+                    <div>
+                        ${new Date(pdf.date).toLocaleDateString('de-DE')}<br>
+                        ${pdf.size || 'Unbekannte Größe'}
+                    </div>
+                    <div class="pdf-actions">
+                        <button class="view-btn" data-id="${pdf.id}">Ansehen</button>
+                        <button class="download-btn" data-id="${pdf.id}">Download</button>
+                        <button class="delete-btn" data-id="${pdf.id}">Löschen</button>
+                    </div>
+                `;
+                
+                pdfList.appendChild(pdfItem);
+            });
+
+            // Event-Listener für Buttons hinzufügen
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', () => viewPdf(btn.dataset.id));
+            });
+            
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', () => downloadPdf(btn.dataset.id));
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => deletePdf(btn.dataset.id));
+            });
+        }
+
+        // PDF anzeigen
+        async function viewPdf(id) {
+            try {
+                window.open(`/api/view-pdf/${id}`, '_blank');
+            } catch (error) {
+                console.error('Error viewing PDF:', error);
+                showMessage('Fehler beim Anzeigen des PDFs', false);
+            }
+        }
+
+        // PDF herunterladen
+        async function downloadPdf(id) {
+            try {
+                const link = document.createElement('a');
+                link.href = `/api/download-pdf/${id}`;
+                link.target = '_blank';
+                link.download = '';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error('Error downloading PDF:', error);
+                showMessage('Fehler beim Herunterladen des PDFs', false);
+            }
+        }
+
+        // PDF löschen
+        async function deletePdf(id) {
+            if (!confirm('Möchten Sie dieses Dokument wirklich löschen?')) return;
+            
+            try {
+                const response = await fetch(`/api/delete-pdf/${id}`, { 
+                    method: 'DELETE' 
+                });
+                
+                if (response.ok) {
+                    showMessage('PDF erfolgreich gelöscht', true);
+                    await updatePdfList();
+                } else {
+                    throw new Error('Fehler beim Löschen');
+                }
+            } catch (error) {
+                console.error('Error deleting PDF:', error);
+                showMessage('Fehler beim Löschen des PDFs: ' + error.message, false);
+            }
+        }
+
+        // Filter anwenden
+        async function applyFilters() {
+            const filters = {
+                type: document.getElementById('document-type').value,
+                profName: document.getElementById('prof-name').value.trim(),
+                semester: document.getElementById('semester').value
+            };
+            
+            const pdfs = await loadPdfList(filters);
+            renderPdfList(pdfs);
+        }
+
+        // Filter zurücksetzen
+        function resetFilters() {
+            document.getElementById('document-type').value = 'all';
+            document.getElementById('prof-name').value = '';
+            document.getElementById('semester').value = 'all';
+            applyFilters();
+        }
+
+        // PDF-Liste aktualisieren
+        async function updatePdfList() {
+            const filters = {
+                type: document.getElementById('document-type').value,
+                profName: document.getElementById('prof-name').value.trim(),
+                semester: document.getElementById('semester').value
+            };
+            
+            const pdfs = await loadPdfList(filters);
+            renderPdfList(pdfs);
+        }
+
+        // Initialisierung
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('filter-btn').addEventListener('click', applyFilters);
+            document.getElementById('reset-btn').addEventListener('click', resetFilters);
+            
+            // Enter-Taste im Suchfeld
+            document.getElementById('prof-name').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') applyFilters();
+            });
+            
+            // Prüfen ob wir von der Formularseite kommen
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('success')) {
+                showMessage('PDF wurde erfolgreich erstellt!', true);
+            }
+            
+            // Initiale Liste laden
+            await updatePdfList();
+        });
+    </script>
+</body>
+</html>

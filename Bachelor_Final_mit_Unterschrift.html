@@ -176,10 +176,25 @@ function switchTemplate() {
                 </div>
             </div>
 
-            <div class="signature-area">
-                <div class="signature-box">Datum, Unterschrift<br>Verantwortlicher Dozent/in</div>
-                <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
-            </div>
+  <div class="signature-area">
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+</div>
+</div>
         </div>
 
         <!-- Page 2 - Anlage 1 -->
@@ -292,10 +307,25 @@ function switchTemplate() {
                 </div>
             </div>
 
-            <div class="signature-area">
-                <div class="signature-box">Datum, Unterschrift<br>Verantwortlicher Dozent/in</div>
-                <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
-            </div>
+        <div class="signature-area">
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+</div>
+</div>
         </div>
         `;  // Dozentenblatt-Vorlage
     window.currentTemplate = 'dozent';
@@ -322,6 +352,117 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('semester-jahr')?.addEventListener('input', updateSemesterText);
   document.getElementById("body-root").className = currentTemplate;
   updateSemesterText();
+});
+// Signature Pad Implementation
+document.addEventListener('DOMContentLoaded', function() {
+    const signaturePads = document.querySelectorAll('.signature-pad');
+    const canvases = {};
+    
+    signaturePads.forEach((canvas, index) => {
+        canvases[`signature${index}`] = {
+            canvas: canvas,
+            ctx: canvas.getContext('2d'),
+            isDrawing: false,
+            lastX: 0,
+            lastY: 0
+        };
+        
+        // Set up event listeners
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        
+        // Touch support for mobile devices
+        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('touchmove', handleTouch);
+        canvas.addEventListener('touchend', stopDrawing);
+        
+        // Clear button
+        const clearBtn = canvas.nextElementSibling;
+        if (clearBtn && clearBtn.classList.contains('clear-signature')) {
+            clearBtn.addEventListener('click', () => clearSignature(canvas));
+        }
+    });
+    
+    function handleTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent(
+            e.type === 'touchstart' ? 'mousedown' : 'mousemove',
+            {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            }
+        );
+        const canvas = e.target;
+        const rect = canvas.getBoundingClientRect();
+        mouseEvent.clientX -= rect.left;
+        mouseEvent.clientY -= rect.top;
+        canvas.dispatchEvent(mouseEvent);
+    }
+    
+    function startDrawing(e) {
+        const canvas = e.target;
+        const sig = Object.values(canvases).find(s => s.canvas === canvas);
+        sig.isDrawing = true;
+        [sig.lastX, sig.lastY] = [e.offsetX, e.offsetY];
+    }
+    
+    function draw(e) {
+        const canvas = e.target;
+        const sig = Object.values(canvases).find(s => s.canvas === canvas);
+        if (!sig.isDrawing) return;
+        
+        sig.ctx.beginPath();
+        sig.ctx.moveTo(sig.lastX, sig.lastY);
+        sig.ctx.lineTo(e.offsetX, e.offsetY);
+        sig.ctx.strokeStyle = '#000';
+        sig.ctx.lineWidth = 2;
+        sig.ctx.stroke();
+        sig.ctx.closePath();
+        [sig.lastX, sig.lastY] = [e.offsetX, e.offsetY];
+    }
+    
+    function stopDrawing(e) {
+        const canvas = e.target;
+        const sig = Object.values(canvases).find(s => s.canvas === canvas);
+        sig.isDrawing = false;
+    }
+    
+    function clearSignature(canvas) {
+        const sig = Object.values(canvases).find(s => s.canvas === canvas);
+        sig.ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    // Modify generatePDF to include signatures
+    const originalGeneratePDF = window.generatePDF;
+    window.generatePDF = function() {
+        // Convert canvas to images
+        signaturePads.forEach(canvas => {
+            const dataURL = canvas.toDataURL('image/png');
+            canvas.style.display = 'none';
+            const img = document.createElement('img');
+            img.src = dataURL;
+            img.style.maxWidth = '300px';
+            img.style.maxHeight = '100px';
+            canvas.parentNode.insertBefore(img, canvas.nextSibling);
+        });
+        
+        // Generate PDF
+        originalGeneratePDF();
+        
+        // Restore canvas
+        setTimeout(() => {
+            signaturePads.forEach(canvas => {
+                canvas.style.display = 'block';
+                const img = canvas.nextElementSibling;
+                if (img && img.tagName === 'IMG') {
+                    img.remove();
+                }
+            });
+        }, 1000);
+    };
 });
 
 </script>
@@ -501,6 +642,34 @@ document.addEventListener('DOMContentLoaded', () => {
             display: flex;
             align-items: center;
         }
+
+        .signature-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.signature-pad {
+    border: 1px solid #000;
+    background-color: #fff;
+    margin-top: 5px;
+}
+
+.clear-signature {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 3px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.date-field {
+    display: inline-block;
+    border-bottom: 1px solid #000;
+}
     </style>
 
 <style>
@@ -512,6 +681,21 @@ body.zuarbeit .container {
 /* Adjust Dozentenblatt PDF upward */
 body.dozent .container {
   transform: translateY(-10mm);
+}
+
+.signature-pad {
+    border: 1px solid #000;
+    background-color: #fff;
+    margin-top: 5px;
+}
+
+.clear-signature {
+    margin-top: 5px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
 }
 </style>
 
@@ -808,10 +992,25 @@ ex:modul
                     </div>
                 </div>
 
-                <div class="signature-area">
-                    <div class="signature-box">Datum, Unterschrift<br>Verantwortliche/r Professor/in</div>
-                    <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
-                </div>
+             <div class="signature-area">
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+</div>
+</div>
                 
                 <div class="notes">
                     <p>Bei Dienstleistung zusätzlich von der bedienenden Fakultät / dem bedienenden Bereich:</p>
@@ -870,7 +1069,12 @@ ex:modul
                     praktikumsleiter: [],
                     planungshinweise: '',
                     kwHinweise: '',
-                    name: ''
+                    name: '',
+                    unterschrift: '',
+    rueckgabedatum: '',
+    profUnterschrift: '',
+    dekanUnterschrift: '',
+    datumUnterschrift: ''
                 };
 
                 let currentPerson = null;
@@ -935,6 +1139,11 @@ ex:modul
                                 else if (prop === 'ex:kwHinweise') data.kwHinweise = value;
                                 else if (prop === 'ex:unterschrift') data.signature = value;
                                 else if (prop === 'ex:name') data.name = value;
+                                else if (prop === 'ex:unterschrift') data.unterschrift = value;
+else if (prop === 'ex:rueckgabedatum') data.rueckgabedatum = value;
+else if (prop === 'ex:profUnterschrift') data.profUnterschrift = value;
+else if (prop === 'ex:dekanUnterschrift') data.dekanUnterschrift = value;
+else if (prop === 'ex:datumUnterschrift') data.datumUnterschrift = value;
                             }
                         }
                     } else if (line === '] .') {
@@ -959,43 +1168,43 @@ ex:modul
                 document.getElementById('kw-name').textContent = signatureInput || data.signature || data.name;
 
                 // Fill Lesende table
-                const lesendeTbody = document.querySelector('#lesende-table tbody');
-                lesendeTbody.innerHTML = '';
-                data.lesende.forEach(person => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${person.titel || ''} ${person.name || ''}</td>
-                        <td>${person.gruppen || ''}</td>
-                        <td>${person.erlaeuterung || ''}</td>
-                    `;
-                    lesendeTbody.appendChild(row);
-                });
+const lesendeTbody = document.querySelector('#lesende-table tbody');
+lesendeTbody.innerHTML = '';
+data.lesende.forEach(person => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${person.titel || ''} ${person.name || ''}</td>
+        <td>${person.gruppen || ''}</td>
+        <td>${person.erlaeuterung || ''}</td>
+    `;
+    lesendeTbody.appendChild(row);
+});
 
-                // Fill Seminarleiter table
-                const seminarleiterTbody = document.querySelector('#seminarleiter-table tbody');
-                seminarleiterTbody.innerHTML = '';
-                data.seminarleiter.forEach(person => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${person.titel || ''} ${person.name || ''}</td>
-                        <td>${person.gruppen || ''}</td>
-                        <td>${person.erlaeuterung || ''}</td>
-                    `;
-                    seminarleiterTbody.appendChild(row);
-                });
+// Fill Seminarleiter table
+const seminarleiterTbody = document.querySelector('#seminarleiter-table tbody');
+seminarleiterTbody.innerHTML = '';
+data.seminarleiter.forEach(person => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${person.titel || ''} ${person.name || ''}</td>
+        <td>${person.gruppen || ''}</td>
+        <td>${person.erlaeuterung || ''}</td>
+    `;
+    seminarleiterTbody.appendChild(row);
+});
 
-                // Fill Praktikumsleiter table
-                const praktikumsleiterTbody = document.querySelector('#praktikumsleiter-table tbody');
-                praktikumsleiterTbody.innerHTML = '';
-                data.praktikumsleiter.forEach(person => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${person.titel || ''} ${person.name || ''}</td>
-                        <td>${person.gruppen || ''}</td>
-                        <td>${person.erlaeuterung || ''}</td>
-                    `;
-                    praktikumsleiterTbody.appendChild(row);
-                });
+// Fill Praktikumsleiter table
+const praktikumsleiterTbody = document.querySelector('#praktikumsleiter-table tbody');
+praktikumsleiterTbody.innerHTML = '';
+data.praktikumsleiter.forEach(person => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${person.titel || ''} ${person.name || ''}</td>
+        <td>${person.gruppen || ''}</td>
+        <td>${person.erlaeuterung || ''}</td>
+    `;
+    praktikumsleiterTbody.appendChild(row);
+});
 
                 // Set planning checkboxes based on hints
                 if (data.planungshinweise) {
@@ -1019,6 +1228,21 @@ ex:modul
                         }
                     });
                 }
+                document.querySelectorAll('.signature-box').forEach(box => {
+    if (box.textContent.includes('Professor/in')) {
+        box.innerHTML = `Datum: ${data.datumUnterschrift || ''}<br>Unterschrift: ${data.profUnterschrift || ''}<br>Verantwortliche/r Professor/in`;
+    } else if (box.textContent.includes('Dekan/in')) {
+        box.innerHTML = `Datum: ${data.datumUnterschrift || ''}<br>Unterschrift: ${data.dekanUnterschrift || ''}<br>Dekan/in der Fakultät`;
+    }
+});
+
+// Rückgabedatum setzen
+const rueckgabeInputs = document.querySelectorAll('.form-input');
+rueckgabeInputs.forEach(input => {
+    if (input.parentElement.textContent.includes('Rückgabe')) {
+        input.textContent = data.rueckgabedatum || '';
+    }
+});
 
                 alert('Formular erfolgreich aus RDF-Daten gefüllt!');
             } catch (error) {
@@ -1027,27 +1251,43 @@ ex:modul
             }
         }
 
-        function generatePDF() {
-            const element = document.getElementById('form-container');
-            
-
-const opt = {
-  margin:       0,
-  filename:     window.currentTemplate === 'zuarbeit' ? 'zuarbeitsblatt.pdf' : 'dozentenblatt.pdf',
-  image:        { type: 'jpeg', quality: 0.98 },
-  html2canvas:  { 
-    scale: 2,
-    scrollY: 0,     
-    y: 0          
-  },
-  jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-};
-
-            
-            // Generate PDF
-            html2pdf().set(opt).from(element).save();
-        }
+       function generatePDF() {
+    const element = document.getElementById('form-container');
+    const opt = {
+        margin: 0,
+        filename: window.currentTemplate === 'zuarbeit' ? 'zuarbeitsblatt.pdf' : 'dozentenblatt.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2,
+            scrollY: 0,
+            useCORS: true,
+            allowTaint: true,
+            logging: true
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
     
+    // Temporarily replace canvas with images for PDF
+    const canvases = document.querySelectorAll('.signature-pad');
+    const canvasReplacements = [];
+    
+    canvases.forEach(canvas => {
+        const replacement = document.createElement('img');
+        replacement.src = canvas.toDataURL('image/png');
+        replacement.style.maxWidth = '300px';
+        replacement.style.maxHeight = '100px';
+        canvas.parentNode.replaceChild(replacement, canvas);
+        canvasReplacements.push({ canvas, replacement });
+    });
+    
+    // Generate PDF
+    html2pdf().set(opt).from(element).save().then(() => {
+        // Restore canvases after PDF generation
+        canvasReplacements.forEach(item => {
+            item.replacement.parentNode.replaceChild(item.canvas, item.replacement);
+        });
+    });
+}
 // Umschalt-Logik für Zuarbeitsblatt <-> Dozentenblatt
 window.window.currentTemplate = window.window.currentTemplate || 'zuarbeit';
 window.window.zuarbeitHTML = window.window.zuarbeitHTML || document.getElementById('form-container').innerHTML;
@@ -1219,10 +1459,25 @@ function switchTemplate() {
                 </div>
             </div>
 
-            <div class="signature-area">
-                <div class="signature-box">Datum, Unterschrift<br>Verantwortlicher Dozent/in</div>
-                <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
-            </div>
+        <div class="signature-area">
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+</div>
+</div>
         </div>
 
         <!-- Page 2 - Anlage 1 -->
@@ -1336,9 +1591,23 @@ function switchTemplate() {
             </div>
 
             <div class="signature-area">
-                <div class="signature-box">Datum, Unterschrift<br>Verantwortlicher Dozent/in</div>
-                <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
-            </div>
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+</div>
         </div>
         `;  // Dozentenblatt-Vorlage
     window.currentTemplate = 'dozent';
@@ -1366,7 +1635,123 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById("body-root").className = currentTemplate;
   updateSemesterText();
 });
+// Signature Pad Implementation
+// Signature Pad Implementation
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize signature pads
+    const signaturePads = document.querySelectorAll('.signature-pad');
+    const signatureData = [];
+    
+    signaturePads.forEach((canvas, index) => {
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        
+        // Store initial state
+        signatureData[index] = {
+            canvas: canvas,
+            ctx: ctx,
+            data: null
+        };
 
+        // Event listeners
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        });
+
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseout', () => isDrawing = false);
+        
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            isDrawing = true;
+            [lastX, lastY] = [touch.clientX - rect.left, touch.clientY - rect.top];
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (!isDrawing) return;
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const currentX = touch.clientX - rect.left;
+            const currentY = touch.clientY - rect.top;
+            draw({ offsetX: currentX, offsetY: currentY });
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('touchend', () => isDrawing = false);
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.closePath();
+            
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+
+        // Clear button
+        const clearBtn = canvas.closest('.signature-box').querySelector('.clear-signature');
+        clearBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            signatureData[index].data = null;
+        });
+    });
+
+    // Modify generatePDF function
+    const originalGeneratePDF = window.generatePDF;
+    window.generatePDF = function() {
+        // Hide clear buttons and store dates
+        const dates = [];
+        document.querySelectorAll('.signature-box').forEach((box, index) => {
+            const dateField = box.querySelector('.date-field');
+            dates[index] = dateField.textContent;
+            box.querySelector('.clear-signature').style.display = 'none';
+        });
+
+        // Generate PDF
+        originalGeneratePDF();
+
+        // Restore clear buttons and dates after delay
+        setTimeout(() => {
+            document.querySelectorAll('.signature-box').forEach((box, index) => {
+                box.querySelector('.clear-signature').style.display = 'block';
+                box.querySelector('.date-field').textContent = dates[index];
+            });
+        }, 1000);
+    };
+});
+
+// Update generatePDF function
+function generatePDF() {
+    const element = document.getElementById('form-container');
+    const opt = {
+        margin: 0,
+        filename: window.currentTemplate === 'zuarbeit' ? 'zuarbeitsblatt.pdf' : 'dozentenblatt.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2,
+            scrollY: 0,
+            ignoreElements: (element) => {
+                return element.classList.contains('clear-signature');
+            }
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save();
+}
 </script>
 </body>
 </html>

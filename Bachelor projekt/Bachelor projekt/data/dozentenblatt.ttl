@@ -1,0 +1,159 @@
+@prefix ex: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:dozent_1756228034328
+  ex:titel "Prof. Dr." ;
+  ex:vorname "Max" ;
+  ex:nachname "Mustermann" ;
+  ex:fakultaet "FIM" ;
+  ex:arbeitszeit "Vollzeit" ;
+  ex:vollzeitInput "100%" ;
+  ex:email "max.mustermann@htwk-leipzig.de" ;
+  ex:telefon "+49 341 1234567" ;
+  ex:dozentHinweise "Bitte keine Veranstaltungen am Mittwochvormittag planen" ;
+  ex:dekanatHinweise "Raumzuweisung erfolgt nach Kapazität" ;
+  ex:profUnterschrift "Prof. Dr. Mustermann" ;
+  ex:dekanUnterschrift "Prof. Dr. Schmidt" ;
+  ex:datumUnterschrift "15.05.2025" ;
+  ex:dozententag "Mittwoch" ;
+  ex:forschungstag "Donnerstag" ;
+  ex:ausnahmeTag "Freitag Nachmittag" ;
+
+ex:dozent_1756228034328
+  ex:sperrzeit [
+    ex:wochen "1-15" ;
+    ex:wochentag "Mittwoch" ;
+    ex:uhrzeit "08:00-10:00" ;
+    ex:begruendung "Forschungstag";
+  ] ;
+  
+  ex:sperrzeit [
+    ex:wochen "2-14" ;
+    ex:wochentag "Freitag" ;
+    ex:uhrzeit "13:00-15:00" ;
+    ex:begruendung "Sprechstunde";
+  ] 
+
+  ex:einsatzzeit [
+    ex:wochen "1-15" ;
+    ex:wochentag "Dienstag" ;
+    ex:uhrzeit "09:15-10:45" ;
+    ex:anmerkung "Vorlesung";
+  ] ;
+
+  ex:einsatzzeit [
+    ex:wochen "1-15" ;
+    ex:wochentag "Dienstag" ;
+    ex:uhrzeit "13:30-15:00" ;
+    ex:anmerkung "Seminar";
+  ] ;
+
+
+  ex:lehrveranstaltung [
+    ex:nummer "1" ;
+    ex:fakultaet "FIM" ;
+    ex:studiengang "BIB" ;
+    ex:fs "3" ;
+    ex:gruppen "1-5" ;
+    ex:modulnr "1300" ;
+    ex:modulname "BAUKO I" ;
+    ex:swsVorlesung "2" ;
+    ex:swsSeminar "0" ;
+    ex:swsPraktikum "0" ;
+    ex:digital "nein" ;
+    ex:bemerkung "Für alle Gruppen gemeinsam";
+  ] ;
+
+  ex:lehrveranstaltung [
+    ex:nummer "2" ;
+    ex:fakultaet "FIM" ;
+    ex:studiengang "BIB" ;
+    ex:fs "3" ;
+    ex:gruppen "1-3" ;
+    ex:modulnr "1301" ;
+    ex:modulname "BAUKO II" ;
+    ex:swsVorlesung "0" ;
+    ex:swsSeminar "2" ;
+    ex:swsPraktikum "0" ;
+    ex:digital "teilweise" ;
+    ex:bemerkung "Hybrid-Seminar (wöchentlich wechselnd)";
+  ] ;
+
+@prefix ex: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+ex:dozent_1756228034444
+  ex:titel "Prof. Dr." ;
+  ex:vorname "Max" ;
+  ex:nachname "Test" ;
+  ex:fakultaet "FIM" ;
+  ex:arbeitszeit "Vollzeit" ;
+  ex:vollzeitInput "100%" ;
+  ex:email "max.mustermann@htwk-leipzig.de" ;
+  ex:telefon "+49 341 1234567" ;
+  ex:dozentHinweise "Bitte keine Veranstaltungen am Mittwochvormittag planen" ;
+  ex:dekanatHinweise "Raumzuweisung erfolgt nach Kapazität" ;
+  ex:profUnterschrift "Prof. Dr. Mustermann" ;
+  ex:dekanUnterschrift "Prof. Dr. Schmidt" ;
+  ex:datumUnterschrift "15.05.2025" ;
+  ex:dozententag "Mittwoch" ;
+  ex:forschungstag "Donnerstag" ;
+  ex:ausnahmeTag "Freitag Nachmittag" ;
+
+ex:dozent_1756228034444
+  ex:sperrzeit [
+    ex:wochen "1-15" ;
+    ex:wochentag "Mittwoch" ;
+    ex:uhrzeit "08:00-10:00" ;
+    ex:begruendung "Forschungstag";
+  ] ;
+  
+  ex:sperrzeit [
+    ex:wochen "2-14" ;
+    ex:wochentag "Freitag" ;
+    ex:uhrzeit "13:00-15:00" ;
+    ex:begruendung "Sprechstunde";
+  ] 
+
+  ex:einsatzzeit [
+    ex:wochen "1-15" ;
+    ex:wochentag "Dienstag" ;
+    ex:uhrzeit "09:15-10:45" ;
+    ex:anmerkung "Vorlesung";
+  ] ;
+
+  ex:einsatzzeit [
+    ex:wochen "1-15" ;
+    ex:wochentag "Dienstag" ;
+    ex:uhrzeit "13:30-15:00" ;
+    ex:anmerkung "Seminar";
+  ] ;
+
+
+  ex:lehrveranstaltung [
+    ex:nummer "1" ;
+    ex:fakultaet "FIM" ;
+    ex:studiengang "BIB" ;
+    ex:fs "3" ;
+    ex:gruppen "1-5" ;
+    ex:modulnr "1300" ;
+    ex:modulname "BAUKO I" ;
+    ex:swsVorlesung "2" ;
+    ex:swsSeminar "0" ;
+    ex:swsPraktikum "0" ;
+    ex:digital "nein" ;
+    ex:bemerkung "Für alle Gruppen gemeinsam";
+  ] ;
+
+  ex:lehrveranstaltung [
+    ex:nummer "2" ;
+    ex:fakultaet "FIM" ;
+    ex:studiengang "BIB" ;
+    ex:fs "3" ;
+    ex:gruppen "1-3" ;
+    ex:modulnr "1301" ;
+    ex:modulname "BAUKO II" ;
+    ex:swsVorlesung "0" ;
+    ex:swsSeminar "2" ;
+    ex:swsPraktikum "0" ;
+    ex:digital "teilweise" ;
+    ex:bemerkung "Hybrid-Seminar (wöchentlich wechselnd)";

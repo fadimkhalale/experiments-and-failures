@@ -1,0 +1,95 @@
+@prefix ex: http://example.org/ .
+@prefix xsd: http://www.w3.org/2001/XMLSchema .
+
+ex:modul_1756228568141
+  ex:fakultaet "FIM" ;
+  ex:studiengang "BIB" ;
+  ex:fs "3" ;
+  ex:gruppen "13 BIB 1 - 5" ;
+  ex:modulnr "1300" ;
+  ex:modulname "BAUKO I" ;
+  ex:lehrveranstaltung "Einführung in die Bibliothekswissenschaft" ;
+  ex:swsVorlesung "2" ;
+  ex:swsSeminar "1" ;
+  ex:swsPraktikum "2" ;
+  ex:raum "Hörsaal 123, Seminarraum 45" ;
+  ex:technik "Beamer, PC, Whiteboard" ;
+  ex:planungshinweise "Gleichmäßige Verteilung auf gerade/ungerade Wochen, Vorlesung zwingend vor Seminar" ;
+  ex:kwHinweise "KW42, KW43, KW44, KW45, KW46, KW47, KW48, KW49, KW50, KW51, KW52, KW01, KW02, KW03, KW04, KW05, KW06" ;
+  ex:name "Prof. Dr. Müller" ;
+  ex:unterschrift "Fadi Mkhalale" ;
+  ex:rueckgabedatum "15.05.2025" ;
+  ex:profUnterschrift "Prof. Dr. Mustermann" ;
+  ex:dekanUnterschrift "Prof. Dr. Schmidt" ;
+  ex:datumUnterschrift "15.05.2025" ;
+
+  ex:lesende [
+    ex:titel "Prof. Dr." ;
+    ex:name "Schmidt" ;
+    ex:gruppen "1-5" ;
+    ex:erlaeuterung "Gemeinsame Vorlesung für alle Gruppen, montags 09:15-10:45 Uhr";
+  ] ;
+
+  ex:seminarleiter [
+    ex:titel "Dr." ;
+    ex:name "Meier" ;
+    ex:gruppen "1-3" ;
+    ex:erlaeuterung "Seminar in 2 Gruppen, Blockveranstaltung gerader Wochen, Dienstag 13:30-17:00 Uhr";
+  ] ;
+
+  ex:seminarleiter [
+    ex:titel "M.Sc." ;
+    ex:name "Schulze" ;
+    ex:gruppen "4-5" ;
+    ex:erlaeuterung "Seminar in 2 Gruppen, Blockveranstaltung ungerader Wochen, Mittwoch 13:30-17:00 Uhr";
+  ] ;
+
+  ex:praktikumsleiter [
+    ex:titel "" ;
+    ex:name "Wagner" ;
+    ex:gruppen "1-5" ;
+    ex:erlaeuterung "Praktikum in Einzelgruppen, wöchentlich wechselnd: Gruppe 1+2 (KW42,44,...), Gruppe 3+4 (KW43,45,...), Gruppe 5 (flexibel)";
+  ] .
+
+@prefix ex: http://example.org/htwk .
+@prefix xsd: http://www.w3.org/2001/XMLSchema .
+@prefix : http://example.org/data/ .
+
+
+:Zuarbeitsblatt_1756743041526 a ex:Zuarbeitsblatt ;
+  ex:abgabeterminDS "2024-10-01"^^xsd:date ;
+  ex:eingangDS "" ;
+  ex:semester "Wintersemester 2024/25" ;
+  ex:fakultaet "FIM-INF" ;
+  ex:studiengang "INB+MIB" ;
+  ex:fs 1 ;
+  ex:gruppen "INB21+22" ;
+  ex:anzahlStudierendeGruppen 0 ;
+  ex:modulnr "C114" ;
+  ex:modulname "Modellierung" ;
+  ex:teilmodulnummer "nix" ;
+  ex:teilmodulbezeichnung "nix" ;
+  ex:fachart "Pflichtmodul" ;
+  ex:swsVorlesung 4 ;
+  ex:swsSeminar 2 ;
+  ex:swsPraktikum 0 ;
+  ex:raumV "gu300" ;
+  ex:raumS "z333" ;
+  ex:raumP "" ;
+  ex:technikV "Beamer/WLAN" ;
+  ex:technikS "Beamer/WLAN" ;
+  ex:technikP "" .
+
+:Zuarbeitsblatt_1756743041526 ex:lesende :Lesende_1756743041526_1 .
+
+:Lesende_1756743041526_1 a ex:Lesende ;
+  ex:fakultaet "FIM-INF" ;
+  ex:name "Prof. Dr. rer. nat Sibylle Schwarz" ;
+  ex:gruppe "21inb 21imb" ;
+  ex:erklaerung "nix" ;
+  ex:zugeordnetZu :Zuarbeitsblatt_1756743041526 .
+:Zuarbeitsblatt_1756743041526 ex:kw_40_1 "true" .
+:Zuarbeitsblatt_1756743041526 ex:kw_42_1 "true" .
+:Zuarbeitsblatt_1756743041526 ex:kw_51_1 "true" .
+:Zuarbeitsblatt_1756743041526 ex:kw_2_1 "true" .
+:Zuarbeitsblatt_1756743041526 ex:kwtxt_4_1 "nix" .

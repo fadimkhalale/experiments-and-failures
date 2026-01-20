@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zuarbeitsblatt Generator mit RDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
+// Umschalt-Logik für Zuarbeitsblatt <-> Dozentenblatt
+window.window.currentTemplate = window.window.currentTemplate || 'zuarbeit';
+window.window.zuarbeitHTML = window.window.zuarbeitHTML || document.getElementById('form-container').innerHTML;
+
+function switchTemplate() {
+  const btn = document.getElementById('switch-template-btn');
+  const container = document.getElementById('form-container');
+
+  if (window.currentTemplate === 'zuarbeit') {
+    container.innerHTML = `
+        <div class="container">
+            <div class="header">
+                <div class="info">
+                    <div>Abgabetermin an DS: <span class="form-input" style="width: 20mm;">01.06.2025</span></div>
+                    <div>Eingegangen bei DS: <span class="form-input" style="width: 20mm;"></span></div>
+                </div>
+                <h1>HTWK Leipzig<br>DS</h1>
+                <h1>Dozentenblatt</h1>
+                <h2><span id="semester-display"></span></h2>
+                <p>Jeder Lehrende füllt bitte nur ein Dozentenblatt aus!</p>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Titel</div>
+                    <div class="form-input" style="width: 20mm;" id="titel"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Vorname</div>
+                    <div class="form-input" style="flex-grow: 1;" id="vorname"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Name</div>
+                    <div class="form-input" style="flex-grow: 1;" id="nachname"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Fakultät/Bereich:</div>
+                    <div class="checkbox-group" id="fakultaet-group">
+                        <div class="checkbox-item"><input type="checkbox" value="FAS"> FAS</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FB"> FB</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FDIT"> FDIT</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FIM"> FIM</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FING"> FING</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FWW"> FWW</div>
+                        <div class="checkbox-item"><input type="checkbox" value="HSZ"> HSZ</div>
+                        <div class="checkbox-item"><input type="checkbox" value="MNZ"> MNZ</div>
+                        <div class="checkbox-item"><input type="checkbox" value="Gast"> Gast</div>
+                        <div class="checkbox-item"><input type="checkbox" value="HonProf"> HonProf</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Arbeitszeit (Pflichtangabe, außer Gast)</div>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" name="work_time" id="fulltime"> <label for="fulltime">Vollzeit</label>
+                            <span class="form-input" style="width: 10mm; margin-left: 2mm;" id="vollzeit-input"></span>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" name="work_time" id="parttime"> <label for="parttime">Teilzeit</label>
+                            <span class="form-input" style="width: 10mm; margin-left: 2mm;" id="teilzeit-input"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">E-Mailadresse (Pflichtangabe)</div>
+                    <div class="form-input" id="email"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">Telefonisch erreichbar unter (optional)</div>
+                    <div class="form-input" id="telefon"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Bitte geben Sie in der Tabelle Ihre Einsätze (auch Bedienfunktionen) an!</div>
+                <div class="section-title">Durchzuführende Lehrveranstaltungen</div>
+                
+                <table id="lehrveranstaltungen">
+                    <thead>
+                        <tr>
+                            <th>Ifd. Nr.</th>
+                            <th>Fak</th>
+                            <th>Stg.</th>
+                            <th>FS</th>
+                            <th>Gruppen</th>
+                            <th>Modulnr./ LE</th>
+                            <th>Modulname (Kürzel)</th>
+                            <th colspan="3">Reale SWS (Präsenz)</th>
+                            <th>Digital</th>
+                            <th>Bemerkung</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th>V</th>
+                            <th>S</th>
+                            <th>P</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+                
+                <div class="notes">
+                    <p>Reale SWS = tatsächlich zu realisierende SWS</p>
+                    <p>Beispiel: 2 SWS Seminar für 5 SG BIB einzeln durchgeführt ergibt 10 zu realisierende SWS</p>
+                    <p>oder</p>
+                    <p>2 SWS Vorlesung für 5 SG BIB, in 2 Blöcken mit jeweils 3 bzw. 2 SG durchgeführt, ergibt 4 zu realisierende SWS</p>
+                    <p>Zu jedem aufgeführten Modul/Teilmodul muss ein Zuarbeitsbogen ausgefüllt werden.</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Hinweise zum Stundenplan:</div>
+                <ul>
+                    <li>Wahlobligatorische Veranstaltungen werden in der ersten Planungsrunde geplant, wenn die Zahl der teilnehmenden Studenten vorliegt und größer als 9 ist. Fakultative und restliche wahlobligatorische Veranstaltungen werden nach Fertigstellung der Pläne in Absprache mit der Fakultät eingefügt.</li>
+                    <li>Da Doppelplanung der Dozenten nicht möglich ist, ist es notwendig, die Lehrkraft zu benennen, die die Lehrveranstaltung wirklich durchführt (z.B. Seminarleiter, Praktikumsbetreuer).</li>
+                </ul>
+                
+                <div class="section-title">Lehrformen: Präsenz (mit digitalen Anteilen, wenn didaktisch vorteilhaft)</div>
+                <ul>
+                    <li>Regelfall: Präsenz (es wird empfohlen, bei Bedarf eine virtuelle Teilnahme zu ermöglichen (hybride LV))</li>
+                    <li>Digital synchron (Wegezeiten für Studierende beachten)</li>
+                    <li>Digital asynchron</li>
+                </ul>
+                
+                <div class="section-title">Digitale Lehre steht unter dem Genehmigungsvorbehalt des Dekans und bedarf der vorherigen Vorlage eines Lehrkonzeptes.</div>
+                <div class="section-title">Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen. Für die Genehmigung und Anrechnung auf das Lehrdeputat sind Mindeststandards zu beachten (siehe Hinweise zu digitaler Lehre an der HTWK Leipzig, Kapitel 4.1).</div>
+                <div class="section-title">Ferner steht jedwede digitale Lehre unter dem Ermöglichungsvorbehalt der Stunden- und Raumplanung.</div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)</div>
+                    <div class="form-input">Die gewünschten Dozenten- und Forschungstage sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen. Nach Prüfung werden diese zentral an DS übermittelt.</div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">Notwendige Sperrzeiten sind: (nur bei Gästen und Teilzeit!)</div>
+                    <div class="form-input">Die notwendigen Sperrzeiten sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen. Nach Prüfung werden diese zentral an DS übermittelt.</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="two-columns">
+                    <div class="column">
+                        <div class="section-title">Bei Bedarf vom Dozenten auszufüllen</div>
+                        <div>Wichtige Hinweise zur Semesterplanung: <span class="form-input" id="hinweise"></span></div>
+                        <div style="height: 30mm;"></div>
+                    </div>
+                    <div class="column">
+                        <div class="section-title">Nur vom Dekanat / Studienamt auszufüllen!</div>
+                        <div>Hinweise bei Rückgabe an den Dozenten:</div>
+                        <div style="height: 30mm;"></div>
+                    </div>
+                </div>
+            </div>
+
+  <div class="signature-area">
+    <div class="signature-box">
+        <div>Datum, Unterschrift</div>
+        <div>Verantwortlicher Dozent/in</div>
+    </div>
+    <div class="signature-box">
+        <div>Datum, Unterschrift</div>
+        <div>Dekan/in der Fakultät</div>
+    </div>
+
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+</div>
+</div>
+        </div>
+
+        <!-- Page 2 - Anlage 1 -->
+        <div class="container page-break">
+            <div class="header">
+                <h1>HTWK Leipzig<br>DS</h1>
+                <h2>Anlage 1 zum Dozentenblatt</h2>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Titel</div>
+                    <div class="form-input" style="width: 20mm;" id="anlage-titel"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Vorname</div>
+                    <div class="form-input" style="flex-grow: 1;" id="anlage-vorname"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Name</div>
+                    <div class="form-input" style="flex-grow: 1;" id="anlage-nachname"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Regelmäßig mögliche Einsatzzeiten für externe Dozenten sind:</div>
+                <table class="time-table" id="einsatzzeiten">
+                    <thead>
+                        <tr>
+                            <th colspan="3">Zeitangabe</th>
+                            <th>Anmerkung</th>
+                        </tr>
+                        <tr>
+                            <th>Wochen</th>
+                            <th>Wochentag</th>
+                            <th>Uhrzeit</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Notwendige regelmäßige Sperrzeiten für interne Dozenten sind:</div>
+                <table class="time-table" id="sperrzeiten">
+                    <thead>
+                        <tr>
+                            <th colspan="3">Zeitangabe</th>
+                            <th>Begründung</th>
+                        </tr>
+                        <tr>
+                            <th>Wochen</th>
+                            <th>Wochentag</th>
+                            <th>Uhrzeit</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)</div>
+                <table class="time-table">
+                    <thead>
+                        <tr>
+                            <th>Tag ist egal</th>
+                            <th>Montag</th>
+                            <th>Dienstag</th>
+                            <th>Mittwoch</th>
+                            <th>Donnerstag</th>
+                            <th>Freitag</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="6">aber nicht: <span class="form-input" style="width: 100mm;"></span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="notes">
+                    <p>Hinweis: D – Dozententag; F – Forschungstag → jeweils nur einmal auswählen!</p>
+                </div>
+            </div>
+
+        <div class="signature-area">
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+    <div class="signature-box">
+        <div class="signature-header">
+            <span>Datum: <span class="form-input date-field" style="width: 20mm;"></span></span>
+            <button class="clear-signature">Unterschrift löschen</button>
+        </div>
+        <div>Unterschrift:</div>
+        <canvas class="signature-pad" width="300" height="80"></canvas>
+    </div>
+</div>
+</div>
+        </div>
+        `;  // Dozentenblatt-Vorlage
+    window.currentTemplate = 'dozent';
+    btn.textContent = 'Wechsel zu Zuarbeitsblatt';
+  } else {
+    container.innerHTML = window.zuarbeitHTML;
+    window.currentTemplate = 'zuarbeit';
+    btn.textContent = 'Wechsel zu Dozentenblatt';
+  }
+  setupEventListeners();
+}
+
+
+
+function updatePlanungswochenText() {
+  if (window.currentTemplate !== 'zuarbeit') return;
+  const planungswochen = document.getElementById('planungswochen')?.value || '42–58';
+  document.querySelectorAll('#planungswochen-display').forEach(el => {
+    el.textContent = planungswochen;
+  });
+}
+
+
+function updateSemesterText() {
+  const art = document.getElementById('semester-art')?.value || 'Wintersemester';
+  const jahr = document.getElementById('semester-jahr')?.value || '2025/26';
+  const semesterText = `${art} ${jahr}`;
+  document.querySelectorAll('#semester-display').forEach(el => {
+    el.textContent = semesterText;
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('planungswochen')?.addEventListener('input', updatePlanungswochenText);
+  document.getElementById('semester-art')?.addEventListener('change', updateSemesterText);
+  document.getElementById('semester-jahr')?.addEventListener('input', updateSemesterText);
+  document.getElementById("body-root").className = currentTemplate;
+  updateSemesterText();
+  updatePlanungswochenText();
+});
+// Signature Pad Implementation
+document.addEventListener('DOMContentLoaded', function() {
+    const signaturePads = document.querySelectorAll('.signature-pad');
+    const canvases = {};
+    
+    signaturePads.forEach((canvas, index) => {
+        canvases[`signature${index}`] = {
+            canvas: canvas,
+            ctx: canvas.getContext('2d'),
+            isDrawing: false,
+            lastX: 0,
+            lastY: 0
+        };
+        
+        // Set up event listeners
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        
+        // Touch support for mobile devices
+        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('touchmove', handleTouch);
+        canvas.addEventListener('touchend', stopDrawing);
+        
+        // Clear button
+        const clearBtn = canvas.nextElementSibling;
+        if (clearBtn && clearBtn.classList.contains('clear-signature')) {
+            clearBtn.addEventListener('click', () => clearSignature(canvas));
+        }
+    });
+    
+    function handleTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent(
+            e.type === 'touchstart' ? 'mousedown' : 'mousemove',
+            {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            }
+        );
+        const canvas = e.target;
+        const rect = canvas.getBoundingClientRect();
+        mouseEvent.clientX -= rect.left;
+        mouseEvent.clientY -= rect.top;
+        canvas.dispatchEvent(mouseEvent);
+    }
+    
+    function startDrawing(e) {
+        const canvas = e.target;
+        const sig = Object.values(canvases).find(s => s.canvas === canvas);
+        sig.isDrawing = true;
+        [sig.lastX, sig.lastY] = [e.offsetX, e.offsetY];
+    }
+    
+    function draw(e) {
+        const canvas = e.target;
+        const sig = Object.values(canvases).find(s => s.canvas === canvas);
+        if (!sig.isDrawing) return;
+        
+        sig.ctx.beginPath();
+        sig.ctx.moveTo(sig.lastX, sig.lastY);
+        sig.ctx.lineTo(e.offsetX, e.offsetY);
+        sig.ctx.strokeStyle = '#000';
+        sig.ctx.lineWidth = 2;
+        sig.ctx.stroke();
+        sig.ctx.closePath();
+        [sig.lastX, sig.lastY] = [e.offsetX, e.offsetY];
+    }
+    
+    function stopDrawing(e) {
+        const canvas = e.target;
+        const sig = Object.values(canvases).find(s => s.canvas === canvas);
+        sig.isDrawing = false;
+    }
+    
+    function clearSignature(canvas) {
+        const sig = Object.values(canvases).find(s => s.canvas === canvas);
+        sig.ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    // Modify generatePDF to include signatures
+    const originalGeneratePDF = window.generatePDF;
+    window.generatePDF = function() {
+        // Convert canvas to images
+        signaturePads.forEach(canvas => {
+            const dataURL = canvas.toDataURL('image/png');
+            canvas.style.display = 'none';
+            const img = document.createElement('img');
+            img.src = dataURL;
+            img.style.maxWidth = '300px';
+            img.style.maxHeight = '100px';
+            canvas.parentNode.insertBefore(img, canvas.nextSibling);
+        });
+        
+        // Generate PDF
+        originalGeneratePDF();
+        
+        // Restore canvas
+        setTimeout(() => {
+            signaturePads.forEach(canvas => {
+                canvas.style.display = 'block';
+                const img = canvas.nextElementSibling;
+                if (img && img.tagName === 'IMG') {
+                    img.remove();
+                }
+            });
+        }, 1000);
+    };
+});
+
+</script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .input-section, .output-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+            width: 210mm; /* A4 width */
+            margin: 0 auto;
+        }
+        
+        /* Include all the CSS from the form */
+        .zuarbeitsblatt {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+            color: #000;
+        }
+        .zuarbeitsblatt .container {
+            width: 210mm;
+            margin: 0 auto;
+            padding: 10mm;
+            box-sizing: border-box;
+        }
+        .zuarbeitsblatt .header {
+            text-align: center;
+            margin-bottom: 10mm;
+        }
+        .zuarbeitsblatt .header h1 {
+            font-size: 16px;
+            margin-bottom: 5mm;
+        }
+        .zuarbeitsblatt .header .info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5mm;
+        }
+        .zuarbeitsblatt .section {
+            margin-bottom: 8mm;
+        }
+        .zuarbeitsblatt .section-title {
+            font-weight: bold;
+            margin-bottom: 3mm;
+            text-decoration: underline;
+        }
+        .zuarbeitsblatt .form-row {
+            display: flex;
+            margin-bottom: 2mm;
+            align-items: center;
+        }
+        .zuarbeitsblatt .form-label {
+            width: 40mm;
+            font-weight: bold;
+        }
+        .zuarbeitsblatt .form-input {
+            flex-grow: 1;
+            border-bottom: 1px solid #000;
+            min-height: 5mm;
+        }
+        .zuarbeitsblatt .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5mm;
+        }
+        .zuarbeitsblatt .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-right: 5mm;
+        }
+        .zuarbeitsblatt table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5mm;
+        }
+        .zuarbeitsblatt th, .zuarbeitsblatt td {
+            border: 1px solid #000;
+            padding: 1mm;
+            text-align: center;
+            font-size: 10px;
+        }
+        .zuarbeitsblatt th {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+        .zuarbeitsblatt .signature-area {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15mm;
+        }
+        .zuarbeitsblatt .signature-box {
+            width: 60mm;
+            border-top: 1px solid #000;
+            padding-top: 2mm;
+        }
+        .zuarbeitsblatt .page-break {
+            page-break-after: always;
+        }
+        .zuarbeitsblatt .notes {
+            font-size: 10px;
+            margin-top: 2mm;
+        }
+        .zuarbeitsblatt .two-columns {
+            display: flex;
+            justify-content: space-between;
+        }
+        .zuarbeitsblatt .column {
+            width: 48%;
+        }
+        .zuarbeitsblatt .time-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5mm;
+        }
+        .zuarbeitsblatt .radio-group {
+            display: flex;
+            gap: 5mm;
+        }
+        .zuarbeitsblatt .radio-item {
+            display: flex;
+            align-items: center;
+        }
+        .zuarbeitsblatt .footer {
+            font-size: 10px;
+            text-align: center;
+            margin-top: 5mm;
+        }
+        .zuarbeitsblatt .kw-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2mm;
+            margin-bottom: 5mm;
+        }
+        .zuarbeitsblatt .kw-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .signature-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.signature-pad {
+    border: 1px solid #000;
+    background-color: #fff;
+    margin-top: 5px;
+}
+
+.clear-signature {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 3px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.date-field {
+    display: inline-block;
+    border-bottom: 1px solid #000;
+}
+    
+
+#lehrveranstaltungen td {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    height: 15mm;
+    vertical-align: top;
+}
+
+
+
+body.dozent #planungswochen,
+body.dozent label[for="planungswochen"] {
+    display: none;
+}
+
+</style>
+
+<style>
+/* Adjust Zuarbeitsblatt PDF slight left */
+body.zuarbeit .container {
+  transform: translateX(-2mm);
+}
+
+/* Adjust Dozentenblatt PDF upward */
+body.dozent .container {
+  transform: translateY(-10mm);
+}
+
+.signature-pad {
+    border: 1px solid #000;
+    background-color: #fff;
+    margin-top: 5px;
+}
+
+.clear-signature {
+    margin-top: 5px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+body.dozent #planungswochen,
+body.dozent label[for="planungswochen"] {
+    display: none;
+}
+
+</style>
+
+</head>
+<body id="body-root">
+
+<div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+  <img src="https://upload.wikimedia.org/wikipedia/de/1/16/HTWK-Logo.svg" alt="HTWK Logo" style="height: 50px;">
+  <button onclick="window.location.href='pdf-manager.html'" 
+          style="background-color: #4CAF50; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+    PDF Manager
+  </button>
+</div>
+
+<div style="margin-bottom: 10px;">
+  <label for="semester-art">Semester:</label>
+  <select id="semester-art"><option value="" disabled selected>-- bitte wählen --</option><option value="Wintersemester">Wintersemester</option>
+    <option value="Sommersemester">Sommersemester</option>
+  </select>
+
+  <label for="semester-jahr" style="margin-left:10px;">Jahr(e):</label>
+  <input type="text" id="semester-jahr" value="2025/26" style="width: 80px;">
+  
+<label for="planungswochen" style="margin-left:10px;">Planungswochen:</label>
+<input type="text" id="planungswochen" value="42–58" style="width: 80px;">
+
+</div>
+
+<button id="switch-template-btn" onclick="switchTemplate()" style="background:#007bff;color:white;padding:10px 15px;border:none;border-radius:5px;margin-bottom:10px;cursor:pointer;">
+  Wechsel zu Dozentenblatt
+</button>
+    <div class="container">
+        <h1>Zuarbeitsblatt Generator mit RDF</h1>
+        
+        <div class="input-section">
+            <h2>RDF/Turtle Eingabe</h2>
+            <p>Geben Sie Ihre Zuarbeitsdaten im Turtle (TTL) Format ein:</p>
+            
+<button id="example-btn" style="background-color: #6c757d; margin-top: 10px;">Beispiel Zuarbeitsblatt</button>
+
+<button id="example-dozentenblatt-btn" style="background-color: #6c757d; margin-top: 10px;">Beispiel Dozentenblatt</button>
+<script>
+document.getElementById('example-dozentenblatt-btn').addEventListener('click', () => {
+    document.getElementById('rdf-input').value = `@prefix ex: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+
+ex:dozent
+  ex:titel "Prof. Dr." ;
+  ex:vorname "Max" ;
+  ex:nachname "Mustermann" ;
+  ex:fakultaet "FIM" ;
+  ex:arbeitszeit "Vollzeit" ;
+  ex:vollzeitInput "100%" ;
+  ex:email "max.mustermann@htwk-leipzig.de" ;
+  ex:telefon "+49 341 1234567" ;
+  ex:hinweise "Spezielle Medienräume benötigt" ;
+
+ex:dozent
+  ex:sperrzeit [
+    ex:wochen "1-15" ;
+    ex:wochentag "Mittwoch" ;
+    ex:uhrzeit "08:00-10:00" ;
+    ex:begruendung "Forschungstag";
+  ] ;
+  
+  ex:sperrzeit [
+    ex:wochen "2-14" ;
+    ex:wochentag "Freitag" ;
+    ex:uhrzeit "13:00-15:00" ;
+    ex:begruendung "Sprechstunde";
+  ] 
+
+  ex:einsatzzeit [
+    ex:wochen "1-15" ;
+    ex:wochentag "Dienstag" ;
+    ex:uhrzeit "09:15-10:45" ;
+    ex:anmerkung "Vorlesung";
+  ] ;
+
+  ex:einsatzzeit [
+    ex:wochen "1-15" ;
+    ex:wochentag "Dienstag" ;
+    ex:uhrzeit "13:30-15:00" ;
+    ex:anmerkung "Seminar";
+  ] ;
+
+
+  ex:lehrveranstaltung [
+    ex:nummer "1" ;
+    ex:fakultaet "FIM" ;
+    ex:studiengang "BIB" ;
+    ex:fs "3" ;
+    ex:gruppen "1-5" ;
+    ex:modulnr "1300" ;
+    ex:modulname "BAUKO I" ;
+    ex:swsVorlesung "2" ;
+    ex:swsSeminar "0" ;
+    ex:swsPraktikum "0" ;
+    ex:digital "nein" ;
+    ex:bemerkung "Für alle Gruppen gemeinsam";
+  ] ;
+
+  ex:lehrveranstaltung [
+    ex:nummer "2" ;
+    ex:fakultaet "FIM" ;
+    ex:studiengang "BIB" ;
+    ex:fs "3" ;
+    ex:gruppen "1-3" ;
+    ex:modulnr "1301" ;
+    ex:modulname "BAUKO II" ;
+    ex:swsVorlesung "0" ;
+    ex:swsSeminar "2" ;
+    ex:swsPraktikum "0" ;
+    ex:digital "teilweise" ;
+    ex:bemerkung "Hybrid-Seminar (wöchentlich wechselnd)";
+  ] ;
+
+  ex:dozententag "Mittwoch" ;
+  ex:forschungstag "Donnerstag" ;
+  ex:ausnahmeTag "Freitag Nachmittag" ;
+
+  ex:profUnterschrift "Max Mustermann" ;
+  ex:dekanUnterschrift "Anna Schmidt" ;
+  ex:datumUnterschrift "15.05.2025" .`;
+    if (window.currentTemplate !== 'dozent') {
+        document.getElementById('switch-template-btn').click();
+    }
+});
+</script>
+
+
+<textarea id="rdf-input" placeholder="Beispiel:
+@prefix ex: &lt;http://example.org/&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+
+ex:modul
+  ex:fakultaet \"FIM\" ;
+  ex:studiengang \"BIB\" ;
+  ex:fs \"1\" ;
+  ex:gruppen \"13 BIB 1 - 5\" ;
+  ex:modulnr \"1300\" ;
+  ex:modulname \"BAUKO I\" ;
+  ex:lehrveranstaltung \"Einführung in die Bibliothekswissenschaft\" ;
+  ex:swsVorlesung \"2\" ;
+  ex:swsSeminar \"0\" ;
+  ex:swsPraktikum \"0\" ;
+  ex:raum \"Hörsaal\" ;
+  ex:technik \"Beamer, PC\" ;
+  ex:lesende [
+    ex:titel \"Prof.\" ;
+    ex:name \"Mustermann\" ;
+    ex:gruppen \"1-5\" ;
+    ex:erlaeuterung \"Gemeinsame Vorlesung für alle Gruppen\" 
+  ] ;
+  ex:seminarleiter [
+    ex:titel \"Dr.\" ;
+    ex:name \"Schmidt\" ;
+    ex:gruppen \"1-3\" ;
+    ex:erlaeuterung \"Seminar in 2 Gruppen\" 
+  ] ;
+  ex:praktikumsleiter [
+    ex:titel \"\" ;
+    ex:name \"Meyer\" ;
+    ex:gruppen \"1-5\" ;
+    ex:erlaeuterung \"Praktikum in Einzelgruppen\" 
+  ] ;
+  ex:planungshinweise \"Gleichmäßige Verteilung auf gerade/ungerade Wochen\" ;
+  ex:kwHinweise \"KW42-52, KW01-06\" ."></textarea>
+
+
+            
+            <button id="parse-btn">Formular aus RDF füllen</button>
+            <button id="generate-pdf">PDF generieren</button>
+            <button id="reset-form">Formular zurücksetzen</button>
+        </div>
+        
+        <div class="output-section">
+            <h2>Zuarbeitsblatt Vorschau</h2>
+            <div id="form-container" class="form-container zuarbeitsblatt">
+                <!-- The complete form will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // First, let's define the complete form HTML
+        const formHTML = `
+        <div class="container">
+            <div class="header">
+                <div class="info">
+                    <div>Abgabetermin bei DS: <span class="form-input" style="width: 20mm;"><br>
+                    </span> Eingang bei DS: <span class="form-input" style="width: 20mm;"></span></div>
+                </div>
+                <h1>HTWK Leipzig <strong>Zuarbeit</strong> <span id="semester-display"></span></h1>
+                <h1>DS <strong>Stunden - Raumplanung</strong> Präsenzplanung</h1>
+                <p><strong><span id="semester-display"></span>:</strong> Planungswochen <span id="planungswochen-display">42–58</span> </p>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Fakultät</div>
+                    <div class="form-input" id="fakultaet"></div>
+                    <div class="form-label" style="margin-left: 5mm;">Studiengang</div>
+                    <div class="form-input" style="width: 20mm;" id="studiengang"></div>
+                    <div class="form-label" style="margin-left: 5mm;">Fachsemester</div>
+                    <div class="form-input" style="width: 10mm;" id="fs"></div>
+                    <div class="form-label" style="margin-left: 5mm;">Gruppen</div>
+                    <div class="form-input" style="width: 30mm;" id="gruppen"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Nummer und Bezeichnung des Moduls</div>
+                    <div class="form-input" id="modulnr-name"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">Nummer und Bezeichnung der Lehrveranstaltung/ des Teilmoduls</div>
+                    <div class="form-input" id="lehrveranstaltung"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th colspan="3">Gesamt SWS (bezogen auf einen Beispiel - Studenten):</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th>Vorlesung</th>
+                            <th>Seminar</th>
+                            <th>Praktikum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>davon SWS</td>
+                            <td id="sws-v"></td>
+                            <td id="sws-s"></td>
+                            <td id="sws-p"></td>
+                        </tr>
+                        <tr>
+                            <td>Raumanforderung</td>
+                            <td colspan="3" id="raum"></td>
+                        </tr>
+                        <tr>
+                            <td>Technikanforderung (Campus - Bereich)</td>
+                            <td colspan="3" id="technik"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="notes">
+                    <p><strong>Hinweis:</strong> 1 SWS = 1 WS (Wochenstunde: 45 min) in jeder Woche des Semesters; geplant werden nur Lehreinheiten: 1 LE=2 WS=90 min</p>
+                    <p>Sind keine weiteren Erläuterungen vorhanden, wird für den Charakter der LV Präsenz angenommen.</p>
+                    <p>Weitere Möglichkeiten sind (siehe Hinweise auf Dozentenblatt):</p>
+                    <p><strong>digital asynchron</strong> (wird nur einmal im Semester im Plan in der Zeit von 07:00-07:30 Uhr eingesetzt),</p>
+                    <p><strong>digital asynchron mit zeitlicher Begrenzung</strong> (kann bei Bedarf auch mehrmals eingesetzt werden, wenn z.B. die KW definiert ist),</p>
+                    <p><strong>digital synchron.</strong></p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Lesende:</div>
+                <table id="lesende-table">
+                    <thead>
+                        <tr>
+                            <th>F - Bereich / Titel, Name</th>
+                            <th>S - Gruppe</th>
+                            <th>Erläuterung</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+                
+                <div class="notes">
+                    <p>Geben Sie bitte an, welche Gruppen gemeinsam an einer Vorlesung teilnehmen oder ob für jede Gruppe einzeln gelesen wird.</p>
+                    <p>Bei mehreren Lesenden bitte die Art der Teilung erläutern:</p>
+                    <p>z. B. inhaltliche Teilung - die Lesenden übernehmen nacheinander ein bestimmtes Gebiet des Lehrstoffes ordnen Sie bitte die</p>
+                    <p>entsprechenden Kalenderwochen zu</p>
+                    <p>quantitative Teilung - jeder Lesende übernimmt eine oder mehrere Seminargruppen, es kann auch parallel geplant werden.</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Seminarleiter:</div>
+                <table id="seminarleiter-table">
+                    <thead>
+                        <tr>
+                            <th>F - Bereich / Titel, Name</th>
+                            <th>S - Gruppe</th>
+                            <th>Erläuterung</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+                
+                <div class="notes">
+                    <p>Bitte geben Sie an, ob die Seminare mit den einzelnen Seminargruppen, in mehreren Gruppen gemeinsam als Hörsaalseminar oder in anderen</p>
+                    <p>Varianten durchgeführt werden.</p>
+                </div>
+            </div>
+
+            <!-- Page Break for second page -->
+            <div class="page-break"></div>
+            
+            <div class="container">
+                <div class="header">
+                    <h1>HTWK Leipzig <strong>Zuarbeit</strong> <span id="semester-display"></span></h1>
+                    <h2>Seite 2</h2>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Praktikumsverantwortliche:</div>
+                    <table id="praktikumsleiter-table">
+                        <thead>
+                            <tr>
+                                <th>F - Bereich / Titel, Name</th>
+                                <th>S - Gruppe</th>
+                                <th>Erläuterung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows will be added dynamically -->
+                        </tbody>
+                    </table>
+                    
+                    <div class="notes">
+                        <p>Bitte geben Sie die Art der Praktikumsdurchführung an, eventuelle Teilnehmerzahlen je Veranstaltung, Staffelung der Praktika usw.</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Wünsche zur Planung dieser Lehrveranstaltung in den umseitig angegebenen Gruppen:</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item"><input type="checkbox" id="planung1"> <label for="planung1">gleichmäßige Verteilung von Vorlesungen und Seminaren auf gerade und ungerade Wochen</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="planung2"> <label for="planung2">Vorlesungen in der einen und Seminare in der anderen Woche</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="planung3"> <label for="planung3">Blockplanung (2 x 90 min hintereinander) von Vorlesungen, Seminaren oder Praktika einer Seminargruppe</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="planung4"> <label for="planung4">keine Blockplanung in einer Seminargruppe</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="planung5"> <label for="planung5">Vorlesung zwingend vor Seminar</label></div>
+                    </div>
+                    
+                    <div class="form-row" style="margin-top: 5mm;">
+                        <div class="form-label">Weitere Planungshinweise:</div>
+                        <div class="form-input" id="planungshinweise"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Weichen die angegebenen Lehrveranstaltungen vom allgemeinen Rhythmus ab, dann geben Sie unbedingt die konkreten Kalenderwochen zu den Veranstaltungen bzw. Dozenten an!</div>
+                    <div class="notes">
+                        <p>Die 15. Lehrveranstaltungswoche ist für Blockveranstaltungen, Prüfungsvorbereitung und Lehrveranstaltungen vorgesehen.</p>
+                    </div>
+                    
+                           <div class="kw-grid">
+                        <div class="kw-item">01. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">02. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">03. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">04. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">05. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">06. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">07. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">08. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">09. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">10. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">11. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">12. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">13. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">14. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">15. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">16. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">17. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">18. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">19. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">20. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">21. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">22. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">23. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">24. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">25. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">26. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">27. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">28. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">29. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">30. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">31. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">32. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">33. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">34. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">35. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">36. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">37. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">38. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">39. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">40. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">41. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">42. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">43. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">44. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">45. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">46. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">47. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">48. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">49. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">50. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">51. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">52. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">53. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">54. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">55. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">56. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">57. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">58. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">59. <span class="form-input" style="width: 15mm;"></span></div>
+                        <div class="kw-item">60. <span class="form-input" style="width: 15mm;"></span></div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-label">Name</div>
+                        <div class="form-input" id="kw-name"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="form-row">
+                        <div class="form-label">Termin der Rückgabe an die Fakultät:</div>
+                        <div class="form-input" style="width: 30mm;" id="rueckgabedatum"></div>
+                        <div class="notes" style="margin-left: 5mm;">(Bei Bedarf von der Fakultät ausfüllen)</div>
+                    </div>
+                </div>
+
+    <div class="signature-area">
+                    <div class="signature-box">Datum, Unterschrift<br>Verantwortliche/r Professor/in</div>
+                    <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
+                </div>
+</div>
+                
+                <div class="notes">
+                    <p>Bei Dienstleistung zusätzlich von der bedienenden Fakultät / dem bedienenden Bereich:</p>
+                </div>
+                
+                <div class="signature-box" style="margin-left: auto;">Datum, Unterschrift<br>Dekan/in der Fakultät / Leiter/in Bereich</div>
+            </div>
+        </div>
+        `;
+
+        // Insert the form HTML into the container
+        document.getElementById('form-container').innerHTML = formHTML;
+
+        // Function to reset the form
+        function resetForm() {
+            document.getElementById('form-container').innerHTML = formHTML;
+            document.getElementById('rdf-input').value = '';
+            setupEventListeners();
+        }
+
+        // Function to setup event listeners
+        function setupEventListeners() {
+            document.getElementById('parse-btn').addEventListener('click', parseRDF);
+            document.getElementById('generate-pdf').addEventListener('click', generatePDF);
+            document.getElementById('reset-form').addEventListener('click', resetForm);
+        }
+
+        // Initialize event listeners
+        setupEventListeners();
+
+function parseRDF() {
+    const ttlData = document.getElementById('rdf-input').value;
+    
+    if (!ttlData.trim()) {
+        alert('Bitte RDF-Daten eingeben!');
+        return;
+    }
+
+    try {
+        const data = {
+            titel: '',
+            vorname: '',
+            nachname: '',
+            fakultaet: '',
+            studiengang: '',
+            fs: '',
+            gruppen: '',
+            modulnr: '',
+            modulname: '',
+            lehrveranstaltung: '',
+            swsVorlesung: '',
+            swsSeminar: '',
+            swsPraktikum: '',
+            raum: '',
+            technik: '',
+            planungshinweise: '',
+            kwHinweise: '',
+            name: '',
+            unterschrift: '',
+            email: '',
+            telefon: '',
+            arbeitszeit: '',
+            vollzeitInput: '',
+            hinweise: '',
+            lesende: [],
+            seminarleiter: [],
+            praktikumsleiter: [],
+            lehrveranstaltungen: [],
+            einsatzzeiten: [],
+            sperrzeiten: [],
+            dozententag: '',
+            forschungstag: '',
+            ausnahmeTag: '',
+            profUnterschrift: '',
+            dekanUnterschrift: '',
+            datumUnterschrift: '',
+            rueckgabedatum: ''
+        };
+
+        let currentPerson = null;
+        let currentLV = null;
+        let currentEinsatzzeit = null;
+        let currentSperrzeit = null;
+        const lines = ttlData.split('\n');
+        
+        for (let line of lines) {
+            line = line.trim();
+            if (!line || line.startsWith('@prefix') || line.startsWith('#')) continue;
+
+            if (line.includes('ex:lesende [')) {
+                currentPerson = { type: 'lesende' };
+                data.lesende.push(currentPerson);
+            } 
+            else if (line.includes('ex:seminarleiter [')) {
+                currentPerson = { type: 'seminarleiter' };
+                data.seminarleiter.push(currentPerson);
+            }
+            else if (line.includes('ex:praktikumsleiter [')) {
+                currentPerson = { type: 'praktikumsleiter' };
+                data.praktikumsleiter.push(currentPerson);
+            }
+            else if (line.includes('ex:lehrveranstaltung [')) {
+                currentLV = {};
+                data.lehrveranstaltungen.push(currentLV);
+            }
+            else if (line.includes('ex:einsatzzeit [')) {
+                currentEinsatzzeit = {};
+                data.einsatzzeiten.push(currentEinsatzzeit);
+            }
+            else if (line.includes('ex:sperrzeit [')) {
+                currentSperrzeit = {};
+                data.sperrzeiten.push(currentSperrzeit);
+            }
+            else if (line.endsWith(';') || line.endsWith('.')) {
+                const lineEnd = line.endsWith(';') ? line.length - 1 : line.length;
+                const parts = line.substring(0, lineEnd).split(/\s+/);
+                
+                if (parts.length >= 2) {
+                    const prop = parts[0];
+                    let value = parts.slice(1).join(' ').trim();
+                    
+                    if (value.startsWith('"') && value.endsWith('"')) {
+                        value = value.substring(1, value.length - 1);
+                    }
+                    else if (value.startsWith('<') && value.endsWith('>')) {
+                        value = value.substring(1, value.length - 1);
+                    }
+
+                    if (currentPerson) {
+                        if (prop === 'ex:titel') currentPerson.titel = value;
+                        else if (prop === 'ex:name') currentPerson.name = value;
+                        else if (prop === 'ex:gruppen') currentPerson.gruppen = value;
+                        else if (prop === 'ex:erlaeuterung') currentPerson.erlaeuterung = value;
+                    } 
+                    else if (currentLV) {
+                        if (prop === 'ex:nummer') currentLV.nummer = value;
+                        else if (prop === 'ex:fakultaet') currentLV.fakultaet = value;
+                        else if (prop === 'ex:studiengang') currentLV.studiengang = value;
+                        else if (prop === 'ex:fs') currentLV.fs = value;
+                        else if (prop === 'ex:gruppen') currentLV.gruppen = value;
+                        else if (prop === 'ex:modulnr') currentLV.modulnr = value;
+                        else if (prop === 'ex:modulname') currentLV.modulname = value;
+                        else if (prop === 'ex:swsVorlesung') currentLV.swsVorlesung = value;
+                        else if (prop === 'ex:swsSeminar') currentLV.swsSeminar = value;
+                        else if (prop === 'ex:swsPraktikum') currentLV.swsPraktikum = value;
+                        else if (prop === 'ex:digital') currentLV.digital = value;
+                        else if (prop === 'ex:bemerkung') currentLV.bemerkung = value;
+                    }
+                    else if (currentEinsatzzeit) {
+                        if (prop === 'ex:wochen') currentEinsatzzeit.wochen = value;
+                        else if (prop === 'ex:wochentag') currentEinsatzzeit.wochentag = value;
+                        else if (prop === 'ex:uhrzeit') currentEinsatzzeit.uhrzeit = value;
+                        else if (prop === 'ex:anmerkung') currentEinsatzzeit.anmerkung = value;
+                    }
+                    else if (currentSperrzeit) {
+                        if (prop === 'ex:wochen') currentSperrzeit.wochen = value;
+                        else if (prop === 'ex:wochentag') currentSperrzeit.wochentag = value;
+                        else if (prop === 'ex:uhrzeit') currentSperrzeit.uhrzeit = value;
+                        else if (prop === 'ex:begruendung') currentSperrzeit.begruendung = value;
+                    }
+                    else {
+                        if (prop === 'ex:titel') data.titel = value;
+                        else if (prop === 'ex:vorname') data.vorname = value;
+                        else if (prop === 'ex:nachname') data.nachname = value;
+                        else if (prop === 'ex:fakultaet') data.fakultaet = value;
+                        else if (prop === 'ex:studiengang') data.studiengang = value;
+                        else if (prop === 'ex:fs') data.fs = value;
+                        else if (prop === 'ex:gruppen') data.gruppen = value;
+                        else if (prop === 'ex:modulnr') data.modulnr = value;
+                        else if (prop === 'ex:modulname') data.modulname = value;
+                        else if (prop === 'ex:lehrveranstaltung') data.lehrveranstaltung = value;
+                        else if (prop === 'ex:swsVorlesung') data.swsVorlesung = value;
+                        else if (prop === 'ex:swsSeminar') data.swsSeminar = value;
+                        else if (prop === 'ex:swsPraktikum') data.swsPraktikum = value;
+                        else if (prop === 'ex:raum') data.raum = value;
+                        else if (prop === 'ex:technik') data.technik = value;
+                        else if (prop === 'ex:planungshinweise') data.planungshinweise = value;
+                        else if (prop === 'ex:kwHinweise') data.kwHinweise = value;
+                        else if (prop === 'ex:name') data.name = value;
+                        else if (prop === 'ex:unterschrift') data.unterschrift = value;
+                        else if (prop === 'ex:email') data.email = value;
+                        else if (prop === 'ex:telefon') data.telefon = value;
+                        else if (prop === 'ex:arbeitszeit') data.arbeitszeit = value;
+                        else if (prop === 'ex:vollzeitInput') data.vollzeitInput = value;
+                        else if (prop === 'ex:hinweise') data.hinweise = value;
+                        else if (prop === 'ex:dozententag') data.dozententag = value;
+                        else if (prop === 'ex:forschungstag') data.forschungstag = value;
+                        else if (prop === 'ex:ausnahmeTag') data.ausnahmeTag = value;
+                        else if (prop === 'ex:profUnterschrift') data.profUnterschrift = value;
+                        else if (prop === 'ex:dekanUnterschrift') data.dekanUnterschrift = value;
+                        else if (prop === 'ex:datumUnterschrift') data.datumUnterschrift = value;
+                        else if (prop === 'ex:rueckgabedatum') data.rueckgabedatum = value;
+                    }
+                }
+            } else if (line === '] .') {
+                currentPerson = null;
+                currentLV = null;
+                currentEinsatzzeit = null;
+                currentSperrzeit = null;
+            }
+        }
+
+        if (window.currentTemplate === 'zuarbeit') {
+            fillZuarbeitsblatt(data);
+        } else {
+            fillDozentenblatt(data);
+        }
+
+        alert('Formular erfolgreich aus RDF-Daten gefüllt!');
+    } catch (error) {
+        console.error('Error parsing RDF:', error);
+        alert('Fehler beim Parsen der RDF-Daten: ' + error.message);
+    }
+}
+
+        function fillZuarbeitsblatt(data) {
+    // Basic fields
+    setFieldContent('fakultaet', data.fakultaet);
+    setFieldContent('studiengang', data.studiengang);
+    setFieldContent('fs', data.fs);
+    setFieldContent('gruppen', data.gruppen);
+    setFieldContent('modulnr-name', `${data.modulnr} ${data.modulname}`);
+    setFieldContent('lehrveranstaltung', data.lehrveranstaltung);
+    setFieldContent('sws-v', data.swsVorlesung);
+    setFieldContent('sws-s', data.swsSeminar);
+    setFieldContent('sws-p', data.swsPraktikum);
+    setFieldContent('raum', data.raum);
+    setFieldContent('technik', data.technik);
+    setFieldContent('rueckgabedatum', data.rueckgabedatum);
+    setFieldContent('planungshinweise', data.planungshinweise);
+    
+    // Signature fields
+    const signatureInput = document.getElementById('signature-name')?.value?.trim();
+    setFieldContent('kw-name', signatureInput || data.unterschrift || data.name);
+    
+    // Fill tables
+    fillPersonTable('lesende-table', data.lesende);
+    fillPersonTable('seminarleiter-table', data.seminarleiter);
+    fillPersonTable('praktikumsleiter-table', data.praktikumsleiter);
+    
+    // Set checkboxes based on planning hints
+    if (data.planungshinweise) {
+        const hints = data.planungshinweise.toLowerCase();
+        setCheckbox('planung1', hints.includes('gleichmäßige'));
+        setCheckbox('planung2', hints.includes('vorlesungen in der einen'));
+        setCheckbox('planung3', hints.includes('blockplanung'));
+        setCheckbox('planung4', hints.includes('keine blockplanung'));
+        setCheckbox('planung5', hints.includes('vorlesung zwingend'));
+    }
+    
+    // Set KW hints if available
+    if (data.kwHinweise) {
+        const kwInputs = document.querySelectorAll('.kw-grid .form-input');
+        const kwList = data.kwHinweise.split(',');
+        kwList.forEach(kw => {
+            const kwNum = kw.trim().replace('KW', '').replace('.', '');
+            const input = Array.from(kwInputs).find(i => i.previousSibling.textContent.trim().startsWith(kwNum));
+            if (input) {
+                input.textContent = data.name || 'X';
+            }
+        });
+    }
+    
+    // Set signature boxes
+    document.querySelectorAll('.signature-box').forEach(box => {
+        if (box.textContent.includes('Professor/in')) {
+            box.innerHTML = `Datum: ${data.datumUnterschrift || ''}<br>Unterschrift: ${data.profUnterschrift || ''}<br>Verantwortliche/r Professor/in`;
+        } else if (box.textContent.includes('Dekan/in')) {
+            box.innerHTML = `Datum: ${data.datumUnterschrift || ''}<br>Unterschrift: ${data.dekanUnterschrift || ''}<br>Dekan/in der Fakultät`;
+        }
+    });
+}
+
+function fillDozentenblatt(data) {
+    // Grunddaten (Seite 1)
+    setFieldContent('titel', data.titel);
+    setFieldContent('vorname', data.vorname);
+    setFieldContent('nachname', data.nachname);
+    setFieldContent('email', data.email);
+    setFieldContent('telefon', data.telefon);
+    setFieldContent('hinweise', data.hinweise);
+
+    // Fakultäts-Checkbox
+    if (data.fakultaet) {
+        const checkbox = document.querySelector(`#fakultaet-group input[value="${data.fakultaet}"]`);
+        if (checkbox) checkbox.checked = true;
+    }
+
+    // Arbeitszeit (Radio-Button + ggf. %-Eingabe)
+    if (data.arbeitszeit) {
+        const isFulltime = data.arbeitszeit.toLowerCase().includes('vollzeit');
+        document.getElementById(isFulltime ? 'fulltime' : 'parttime').checked = true;
+        
+        if (isFulltime && data.vollzeitInput) {
+            setFieldContent('vollzeit-input', data.vollzeitInput);
+        }
+    }
+
+    // Lehrveranstaltungstabelle mit Digital/Bemerkung
+    const lvTable = document.querySelector('#lehrveranstaltungen tbody');
+    if (lvTable) {
+        lvTable.innerHTML = '';
+        data.lehrveranstaltungen.forEach((lv, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${lv.fakultaet || ''}</td>
+                <td>${lv.studiengang || ''}</td>
+                <td>${lv.fs || ''}</td>
+                <td>${lv.gruppen || ''}</td>
+                <td>${lv.modulnr || ''}</td>
+                <td>${lv.modulname || ''}</td>
+                <td>${lv.swsVorlesung || '0'}</td>
+                <td>${lv.swsSeminar || '0'}</td>
+                <td>${lv.swsPraktikum || '0'}</td>
+                <td>${lv.digital || ''}</td>
+                <td>${lv.bemerkung || ''}</td>
+            `;
+            lvTable.appendChild(row);
+        });
+    }
+
+    // Anlage 1: Persönliche Daten (Kopfzeile)
+    setFieldContent('anlage-titel', data.titel);
+    setFieldContent('anlage-vorname', data.vorname);
+    setFieldContent('anlage-nachname', data.nachname);
+
+    // Anlage 1: Einsatzzeiten (für externe Dozenten)
+    const einsatzzeitenTable = document.querySelector('#einsatzzeiten tbody');
+    if (einsatzzeitenTable) {
+        einsatzzeitenTable.innerHTML = '';
+        (data.einsatzzeiten || []).forEach(einsatz => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${einsatz.wochen || ''}</td>
+                <td>${einsatz.wochentag || ''}</td>
+                <td>${einsatz.uhrzeit || ''}</td>
+                <td>${einsatz.anmerkung || ''}</td>
+            `;
+            einsatzzeitenTable.appendChild(row);
+        });
+    }
+
+    // Anlage 1: Sperrzeiten (für interne Dozenten)
+    const sperrzeitenTable = document.querySelector('#sperrzeiten tbody');
+    if (sperrzeitenTable) {
+        sperrzeitenTable.innerHTML = '';
+        (data.sperrzeiten || []).forEach(sperre => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${sperre.wochen || ''}</td>
+                <td>${sperre.wochentag || ''}</td>
+                <td>${sperre.uhrzeit || ''}</td>
+                <td>${sperre.begruendung || ''}</td>
+            `;
+            sperrzeitenTable.appendChild(row);
+        });
+    }
+
+    // Anlage 1: Dozenten-/Forschungstag
+    if (data.dozententag || data.forschungstag) {
+        // Alle Checkboxen zurücksetzen
+        document.querySelectorAll('.time-table input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+        });
+
+        const checkboxContainer = document.querySelector('.time-table tbody tr:first-child');
+        if (checkboxContainer) {
+            const cells = checkboxContainer.querySelectorAll('td');
+            cells.forEach(cell => {
+                const day = cell.textContent.trim().toLowerCase();
+                if (data.dozententag && day === data.dozententag.toLowerCase()) {
+                    const checkbox = cell.querySelector('input[value="D"]');
+                    if (checkbox) checkbox.checked = true;
+                }
+                if (data.forschungstag && day === data.forschungstag.toLowerCase()) {
+                    const checkbox = cell.querySelector('input[value="F"]');
+                    if (checkbox) checkbox.checked = true;
+                }
+            });
+        }
+
+        if (data.ausnahmeTag) {
+            const ausnahmeField = document.querySelector('.time-table tbody tr:last-child td span.form-input');
+            if (ausnahmeField) ausnahmeField.textContent = data.ausnahmeTag;
+        }
+    }
+
+    // Unterschriften (Seite 1 + Anlage 1)
+    document.querySelectorAll('.signature-box').forEach(box => {
+        if (box.textContent.includes('Professor/in')) {
+            box.innerHTML = `Datum: ${data.datumUnterschrift || ''}<br>Unterschrift: ${data.profUnterschrift || ''}<br>Verantwortliche/r Professor/in`;
+        } else if (box.textContent.includes('Dekan/in')) {
+            box.innerHTML = `Datum: ${data.datumUnterschrift || ''}<br>Unterschrift: ${data.dekanUnterschrift || ''}<br>Dekan/in der Fakultät`;
+        }
+    });
+}
+// Helper functions
+function setFieldContent(id, content) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = content || '';
+}
+
+function fillPersonTable(tableId, persons) {
+    const tbody = document.querySelector(`#${tableId} tbody`);
+    if (tbody) {
+        tbody.innerHTML = '';
+        persons.forEach(person => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${person.titel || ''} ${person.name || ''}</td>
+                <td>${person.gruppen || ''}</td>
+                <td>${person.erlaeuterung || ''}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+}
+
+function setCheckbox(id, checked) {
+    const checkbox = document.getElementById(id);
+    if (checkbox) checkbox.checked = checked;
+}
+
+async function generatePDF() {
+    try {
+        const element = document.getElementById('form-container');
+        if (!element) {
+            throw new Error('Formular-Container nicht gefunden');
+        }
+
+        // PDF-Optionen basierend auf dem aktuellen Template
+        const isZuarbeit = window.currentTemplate === 'zuarbeit';
+        const opt = {
+            margin: 0,
+            filename: getPDFFilename(isZuarbeit),
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: getCanvasOptions(isZuarbeit),
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Temporär unerwünschte Elemente ausblenden
+        hideElementsDuringPDFGeneration();
+
+        // PDF generieren
+        await html2pdf().set(opt).from(element).save();
+
+    } catch (error) {
+        console.error('Fehler beim PDF-Generieren:', error);
+        alert('Fehler beim Generieren des PDFs: ' + error.message);
+    } finally {
+        // Elemente wieder einblenden
+        showElementsAfterPDFGeneration();
+    }
+}
+
+// Hilfsfunktionen
+function getPDFFilename(isZuarbeit) {
+    const nameField = isZuarbeit ? 'kw-name' : 'nachname';
+    const nameElement = document.getElementById(nameField);
+    const name = nameElement?.textContent?.trim() || 'unbekannt';
+    const prefix = isZuarbeit ? 'Zuarbeitsblatt_' : 'Dozentenblatt_';
+    return `${prefix}${name}_${getCurrentSemester()}.pdf`;
+}
+
+function getCanvasOptions(isZuarbeit) {
+    return {
+        scale: 2,
+        scrollY: 0,
+        ignoreElements: (el) => {
+            return el.classList.contains('clear-signature') || 
+                   el.classList.contains('no-export');
+        },
+        onclone: (clonedDoc) => {
+            // Spezielle Anpassungen für das geklonte Dokument
+            if (!isZuarbeit) {
+                const dateFields = clonedDoc.querySelectorAll('.date-field');
+                dateFields.forEach(field => {
+                    if (!field.textContent.trim()) {
+                        field.textContent = new Date().toLocaleDateString('de-DE');
+                    }
+                });
+            }
+        }
+    };
+}
+
+function hideElementsDuringPDFGeneration() {
+    document.querySelectorAll('.clear-signature, .no-export').forEach(el => {
+        el.style.visibility = 'hidden';
+    });
+}
+
+function showElementsAfterPDFGeneration() {
+    document.querySelectorAll('.clear-signature, .no-export').forEach(el => {
+        el.style.visibility = 'visible';
+    });
+}
+
+function getCurrentSemester() {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    return (month >= 4 && month <= 9) 
+        ? `SoSe_${year}` 
+        : `WiSe_${year}_${year+1}`;
+}
+function getCurrentSemester() {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    
+    if (month >= 4 && month <= 9) {
+        return `Sommersemester ${year}`;
+    } else {
+        return `Wintersemester ${year}/${year + 1}`;
+    }
+}
+// Umschalt-Logik für Zuarbeitsblatt <-> Dozentenblatt
+window.window.currentTemplate = window.window.currentTemplate || 'zuarbeit';
+window.window.zuarbeitHTML = window.window.zuarbeitHTML || document.getElementById('form-container').innerHTML;
+
+function switchTemplate() {
+  const btn = document.getElementById('switch-template-btn');
+  const container = document.getElementById('form-container');
+
+  if (window.currentTemplate === 'zuarbeit') {
+    container.innerHTML = `
+        <div class="container">
+            <div class="header">
+                <div class="info">
+                    <div>Abgabetermin an DS: <span class="form-input" style="width: 20mm;"></span></div>
+                    <div>Eingegangen bei DS: <span class="form-input" style="width: 20mm;"></span></div>
+                </div>
+                <h1>HTWK Leipzig<br>DS</h1>
+                <h1>Dozentenblatt</h1>
+                <h2><span id="semester-display"></span></h2>
+                <p>Jeder Lehrende füllt bitte nur ein Dozentenblatt aus!</p>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Titel</div>
+                    <div class="form-input" style="width: 20mm;" id="titel"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Vorname</div>
+                    <div class="form-input" style="flex-grow: 1;" id="vorname"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Name</div>
+                    <div class="form-input" style="flex-grow: 1;" id="nachname"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Fakultät/Bereich:</div>
+                    <div class="checkbox-group" id="fakultaet-group">
+                        <div class="checkbox-item"><input type="checkbox" value="FAS"> FAS</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FB"> FB</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FDIT"> FDIT</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FIM"> FIM</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FING"> FING</div>
+                        <div class="checkbox-item"><input type="checkbox" value="FWW"> FWW</div>
+                        <div class="checkbox-item"><input type="checkbox" value="HSZ"> HSZ</div>
+                        <div class="checkbox-item"><input type="checkbox" value="MNZ"> MNZ</div>
+                        <div class="checkbox-item"><input type="checkbox" value="Gast"> Gast</div>
+                        <div class="checkbox-item"><input type="checkbox" value="HonProf"> HonProf</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Arbeitszeit (Pflichtangabe, außer Gast)</div>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" name="work_time" id="fulltime"> <label for="fulltime">Vollzeit</label>
+                            <span class="form-input" style="width: 10mm; margin-left: 2mm;" id="vollzeit-input"></span>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" name="work_time" id="parttime"> <label for="parttime">Teilzeit</label>
+                            <span class="form-input" style="width: 10mm; margin-left: 2mm;" id="teilzeit-input"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">E-Mailadresse (Pflichtangabe)</div>
+                    <div class="form-input" id="email"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">Telefonisch erreichbar unter (optional)</div>
+                    <div class="form-input" id="telefon"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Bitte geben Sie in der Tabelle Ihre Einsätze (auch Bedienfunktionen) an!</div>
+                <div class="section-title">Durchzuführende Lehrveranstaltungen</div>
+                
+                <table id="lehrveranstaltungen">
+                    <thead>
+                        <tr>
+                            <th>Ifd. Nr.</th>
+                            <th>Fak</th>
+                            <th>Stg.</th>
+                            <th>FS</th>
+                            <th>Gruppen</th>
+                            <th>Modulnr./ LE</th>
+                            <th>Modulname (Kürzel)</th>
+                            <th colspan="3">Reale SWS (Präsenz)</th>
+                            <th>Digital</th>
+                            <th>Bemerkung</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th>V</th>
+                            <th>S</th>
+                            <th>P</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+                
+                <div class="notes">
+                    <p>Reale SWS = tatsächlich zu realisierende SWS</p>
+                    <p>Beispiel: 2 SWS Seminar für 5 SG BIB einzeln durchgeführt ergibt 10 zu realisierende SWS</p>
+                    <p>oder</p>
+                    <p>2 SWS Vorlesung für 5 SG BIB, in 2 Blöcken mit jeweils 3 bzw. 2 SG durchgeführt, ergibt 4 zu realisierende SWS</p>
+                    <p>Zu jedem aufgeführten Modul/Teilmodul muss ein Zuarbeitsbogen ausgefüllt werden.</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Hinweise zum Stundenplan:</div>
+                <ul>
+                    <li>Wahlobligatorische Veranstaltungen werden in der ersten Planungsrunde geplant, wenn die Zahl der teilnehmenden Studenten vorliegt und größer als 9 ist. Fakultative und restliche wahlobligatorische Veranstaltungen werden nach Fertigstellung der Pläne in Absprache mit der Fakultät eingefügt.</li>
+                    <li>Da Doppelplanung der Dozenten nicht möglich ist, ist es notwendig, die Lehrkraft zu benennen, die die Lehrveranstaltung wirklich durchführt (z.B. Seminarleiter, Praktikumsbetreuer).</li>
+                </ul>
+                
+                <div class="section-title">Lehrformen: Präsenz (mit digitalen Anteilen, wenn didaktisch vorteilhaft)</div>
+                <ul>
+                    <li>Regelfall: Präsenz (es wird empfohlen, bei Bedarf eine virtuelle Teilnahme zu ermöglichen (hybride LV))</li>
+                    <li>Digital synchron (Wegezeiten für Studierende beachten)</li>
+                    <li>Digital asynchron</li>
+                </ul>
+                
+                <div class="section-title">Digitale Lehre steht unter dem Genehmigungsvorbehalt des Dekans und bedarf der vorherigen Vorlage eines Lehrkonzeptes.</div>
+                <div class="section-title">Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen. Für die Genehmigung und Anrechnung auf das Lehrdeputat sind Mindeststandards zu beachten (siehe Hinweise zu digitaler Lehre an der HTWK Leipzig, Kapitel 4.1).</div>
+                <div class="section-title">Ferner steht jedwede digitale Lehre unter dem Ermöglichungsvorbehalt der Stunden- und Raumplanung.</div>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)</div>
+                    <div class="form-input">Die gewünschten Dozenten- und Forschungstage sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen. Nach Prüfung werden diese zentral an DS übermittelt.</div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">Notwendige Sperrzeiten sind: (nur bei Gästen und Teilzeit!)</div>
+                    <div class="form-input">Die notwendigen Sperrzeiten sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen. Nach Prüfung werden diese zentral an DS übermittelt.</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="two-columns">
+                    <div class="column">
+                        <div class="section-title">Bei Bedarf vom Dozenten auszufüllen</div>
+                        <div>Wichtige Hinweise zur Semesterplanung: <span class="form-input" id="hinweise"></span></div>
+                        <div style="height: 30mm;"></div>
+                    </div>
+                    <div class="column">
+                        <div class="section-title">Nur vom Dekanat / Studienamt auszufüllen!</div>
+                        <div>Hinweise bei Rückgabe an den Dozenten:</div>
+                        <div style="height: 30mm;"></div>
+                    </div>
+                </div>
+            </div>
+
+     <div class="signature-area">
+                    <div class="signature-box">Datum, Unterschrift<br>Verantwortliche/r Professor/in</div>
+                    <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
+                </div>
+</div>
+        </div>
+
+        <!-- Page 2 - Anlage 1 -->
+        <div class="container page-break">
+            <div class="header">
+                <h1>HTWK Leipzig<br>DS</h1>
+                <h2>Anlage 1 zum Dozentenblatt</h2>
+            </div>
+
+            <div class="section">
+                <div class="form-row">
+                    <div class="form-label">Titel</div>
+                    <div class="form-input" style="width: 20mm;" id="anlage-titel"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Vorname</div>
+                    <div class="form-input" style="flex-grow: 1;" id="anlage-vorname"></div>
+                    <div class="form-label" style="width: 20mm; margin-left: 5mm;">Name</div>
+                    <div class="form-input" style="flex-grow: 1;" id="anlage-nachname"></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Regelmäßig mögliche Einsatzzeiten für externe Dozenten sind:</div>
+                <table class="time-table" id="einsatzzeiten">
+                    <thead>
+                        <tr>
+                            <th colspan="3">Zeitangabe</th>
+                            <th>Anmerkung</th>
+                        </tr>
+                        <tr>
+                            <th>Wochen</th>
+                            <th>Wochentag</th>
+                            <th>Uhrzeit</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Notwendige regelmäßige Sperrzeiten für interne Dozenten sind:</div>
+                <table class="time-table" id="sperrzeiten">
+                    <thead>
+                        <tr>
+                            <th colspan="3">Zeitangabe</th>
+                            <th>Begründung</th>
+                        </tr>
+                        <tr>
+                            <th>Wochen</th>
+                            <th>Wochentag</th>
+                            <th>Uhrzeit</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)</div>
+                <table class="time-table">
+                    <thead>
+                        <tr>
+                            <th>Tag ist egal</th>
+                            <th>Montag</th>
+                            <th>Dienstag</th>
+                            <th>Mittwoch</th>
+                            <th>Donnerstag</th>
+                            <th>Freitag</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                            <td>
+                                <div class="checkbox-item"><input type="checkbox"> D</div>
+                                <div class="checkbox-item"><input type="checkbox"> F</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="6">aber nicht: <span class="form-input" style="width: 100mm;"></span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="notes">
+                    <p>Hinweis: D – Dozententag; F – Forschungstag → jeweils nur einmal auswählen!</p>
+                </div>
+            </div>
+
+         <div class="signature-area">
+                    <div class="signature-box">Datum, Unterschrift<br>Verantwortliche/r Professor/in</div>
+                    <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
+                </div>
+        </div>
+        `;  // Dozentenblatt-Vorlage
+    window.currentTemplate = 'dozent';
+    btn.textContent = 'Wechsel zu Zuarbeitsblatt';
+  } else {
+    container.innerHTML = window.zuarbeitHTML;
+    window.currentTemplate = 'zuarbeit';
+    btn.textContent = 'Wechsel zu Dozentenblatt';
+  }
+  setupEventListeners();
+}
+
+
+
+function updatePlanungswochenText() {
+  if (window.currentTemplate !== 'zuarbeit') return;
+  const planungswochen = document.getElementById('planungswochen')?.value || '42–58';
+  document.querySelectorAll('#planungswochen-display').forEach(el => {
+    el.textContent = planungswochen;
+  });
+}
+
+
+function updateSemesterText() {
+  const art = document.getElementById('semester-art')?.value || 'Wintersemester';
+  const jahr = document.getElementById('semester-jahr')?.value || '2025/26';
+  const semesterText = `${art} ${jahr}`;
+  document.querySelectorAll('#semester-display').forEach(el => {
+    el.textContent = semesterText;
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('planungswochen')?.addEventListener('input', updatePlanungswochenText);
+  document.getElementById('semester-art')?.addEventListener('change', updateSemesterText);
+  document.getElementById('semester-jahr')?.addEventListener('input', updateSemesterText);
+  document.getElementById("body-root").className = currentTemplate;
+  updateSemesterText();
+  updatePlanungswochenText();
+});
+// Signature Pad Implementation
+// Signature Pad Implementation
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize signature pads
+    const signaturePads = document.querySelectorAll('.signature-pad');
+    const signatureData = [];
+    
+    signaturePads.forEach((canvas, index) => {
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        
+        // Store initial state
+        signatureData[index] = {
+            canvas: canvas,
+            ctx: ctx,
+            data: null
+        };
+
+        // Event listeners
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        });
+
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseout', () => isDrawing = false);
+        
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            isDrawing = true;
+            [lastX, lastY] = [touch.clientX - rect.left, touch.clientY - rect.top];
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (!isDrawing) return;
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const currentX = touch.clientX - rect.left;
+            const currentY = touch.clientY - rect.top;
+            draw({ offsetX: currentX, offsetY: currentY });
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('touchend', () => isDrawing = false);
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.closePath();
+            
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+
+        // Clear button
+        const clearBtn = canvas.closest('.signature-box').querySelector('.clear-signature');
+        clearBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            signatureData[index].data = null;
+        });
+    });
+
+    // Modify generatePDF function
+    const originalGeneratePDF = window.generatePDF;
+    window.generatePDF = function() {
+        // Hide clear buttons and store dates
+        const dates = [];
+        document.querySelectorAll('.signature-box').forEach((box, index) => {
+            const dateField = box.querySelector('.date-field');
+            dates[index] = dateField.textContent;
+            box.querySelector('.clear-signature').style.display = 'none';
+        });
+
+        // Generate PDF
+        originalGeneratePDF();
+
+        // Restore clear buttons and dates after delay
+        setTimeout(() => {
+            document.querySelectorAll('.signature-box').forEach((box, index) => {
+                box.querySelector('.clear-signature').style.display = 'block';
+                box.querySelector('.date-field').textContent = dates[index];
+            });
+        }, 1000);
+    };
+});
+
+// Update generatePDF function
+function generatePDF() {
+    const element = document.getElementById('form-container');
+    const opt = {
+        margin: 0,
+        filename: (() => {
+        const isZuarbeit = window.currentTemplate === 'zuarbeit';
+        const name = (document.getElementById(isZuarbeit ? 'kw-name' : 'nachname')?.textContent || 'unbekannt').trim();
+        const prefix = isZuarbeit ? 'Zuarbeitsblatt_' : 'Dozentenblatt_';
+        return `${prefix}${name || 'unbekannt'}.pdf`;
+    })(),
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2,
+            scrollY: 0,
+            ignoreElements: (element) => {
+                return element.classList.contains('clear-signature');
+            }
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save();
+}
+</script>
+
+<script>
+// Beispiel-RDF Button
+document.addEventListener("DOMContentLoaded", function () {
+  const exampleBtn = document.getElementById("example-btn");
+  if (exampleBtn) {
+    exampleBtn.addEventListener("click", () => {
+      const exampleTTL = `@prefix ex: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:modul
+  ex:fakultaet "FIM" ;
+  ex:studiengang "BIB" ;
+  ex:fs "3" ;
+  ex:gruppen "13 BIB 1 - 5" ;
+  ex:modulnr "1300" ;
+  ex:modulname "BAUKO I" ;
+  ex:lehrveranstaltung "Einführung in die Bibliothekswissenschaft" ;
+  ex:swsVorlesung "2" ;
+  ex:swsSeminar "1" ;
+  ex:swsPraktikum "2" ;
+  ex:raum "Hörsaal 123, Seminarraum 45" ;
+  ex:technik "Beamer, PC, Whiteboard" ;
+  ex:planungshinweise "Gleichmäßige Verteilung auf gerade/ungerade Wochen, Vorlesung zwingend vor Seminar" ;
+  ex:kwHinweise "KW42, KW43, KW44, KW45, KW46, KW47, KW48, KW49, KW50, KW51, KW52, KW01, KW02, KW03, KW04, KW05, KW06" ;
+  ex:name "Prof. Dr. Müller" ;
+  ex:unterschrift "Fadi Mkhalale" ;
+  ex:rueckgabedatum "15.05.2025" ;
+  ex:profUnterschrift "Prof. Dr. Mustermann" ;
+  ex:dekanUnterschrift "Prof. Dr. Schmidt" ;
+  ex:datumUnterschrift "15.05.2025" ;
+
+  ex:lesende [
+    ex:titel "Prof. Dr." ;
+    ex:name "Schmidt" ;
+    ex:gruppen "1-5" ;
+    ex:erlaeuterung "Gemeinsame Vorlesung für alle Gruppen, montags 09:15-10:45 Uhr";
+  ] ;
+
+  ex:seminarleiter [
+    ex:titel "Dr." ;
+    ex:name "Meier" ;
+    ex:gruppen "1-3" ;
+    ex:erlaeuterung "Seminar in 2 Gruppen, Blockveranstaltung gerader Wochen, Dienstag 13:30-17:00 Uhr";
+  ] ;
+
+  ex:seminarleiter [
+    ex:titel "M.Sc." ;
+    ex:name "Schulze" ;
+    ex:gruppen "4-5" ;
+    ex:erlaeuterung "Seminar in 2 Gruppen, Blockveranstaltung ungerader Wochen, Mittwoch 13:30-17:00 Uhr";
+  ] ;
+
+  ex:praktikumsleiter [
+    ex:titel "" ;
+    ex:name "Wagner" ;
+    ex:gruppen "1-5" ;
+    ex:erlaeuterung "Praktikum in Einzelgruppen, wöchentlich wechselnd: Gruppe 1+2 (KW42,44,...), Gruppe 3+4 (KW43,45,...), Gruppe 5 (flexibel)";
+  ] .`;
+
+      document.getElementById('rdf-input').value = exampleTTL;
+    });
+  }
+
+  // Datum & Unterschrift automatisch setzen
+  const observer = new MutationObserver(() => {
+    const boxes = document.querySelectorAll('.signature-box');
+    if (boxes.length >= 2) {
+      boxes[0].innerHTML = '<div>Datum: 15.05.2025</div><div>Unterschrift: Prof. Dr. Mustermann</div><div>Verantwortliche/r Professor/in</div>';
+      boxes[1].innerHTML = '<div>Datum: 15.05.2025</div><div>Unterschrift: Prof. Dr. Schmidt</div><div>Dekan/in der Fakultät</div>';
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+});
+</script>
+</body>
+
+</html>

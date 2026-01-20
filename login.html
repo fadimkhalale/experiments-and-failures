@@ -29,13 +29,11 @@
       <img src="https://upload.wikimedia.org/wikipedia/de/1/16/HTWK-Logo.svg" alt="HTWK Logo" class="logo" />
       <h1>Anmeldung</h1>
       <p class="subtitle">Melde dich mit deinem Verwaltungs-Konto an, um die Formularseite zu öffnen.</p>
-      
-      <div class="error" id="errorMsg" role="alert" style="display: none;"></div>
-      
       <form id="login-form" method="post" action="/login" autocomplete="off" novalidate>
         <label class="field"><span>Benutzername</span><input id="username" name="username" required placeholder="z. B. dekan-htwkleipzig" aria-label="Benutzername" /></label>
         <label class="field"><span>Passwort</span><input id="password" name="password" type="password" required aria-label="Passwort" /></label>
         <button class="btn" type="submit" id="submitBtn">Anmelden</button>
+        <div class="error" id="errorMsg" role="alert"></div>
       </form>
       <div class="note">Nach erfolgreichem Login wirst du automatisch zur Formularseite weitergeleitet.</div>
       <div class="footer">Bei Problemen wende dich an das Studienbüro.</div>
@@ -57,16 +55,6 @@
         err.style.display = 'none';
       }
 
-      // Fehler anzeigen, wenn in URL vorhanden
-      const params = new URLSearchParams(location.search);
-      if(params.get('error')) {
-        showError('Falscher Benutzername oder Passwort');
-      }
-      if(params.get('loggedout')) {
-        showError('Erfolgreich abgemeldet');
-        setTimeout(clearError, 3500);
-      }
-
       form.addEventListener('submit', function(ev){
         clearError();
         const u = (form.username.value || '').trim();
@@ -83,6 +71,13 @@
           submitBtn.textContent = 'Anmelden';
         },10000);
       });
+
+      const params = new URLSearchParams(location.search);
+      if(params.get('loggedout')) {
+        clearError();
+        showError('Erfolgreich abgemeldet.');
+        setTimeout(clearError,3500);
+      }
     })();
   </script>
 </body>
