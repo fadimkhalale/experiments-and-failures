@@ -1,0 +1,17 @@
+[
+  {
+    "username": "studiendekan",
+    "password": "studiendekan_passwort",
+    "role": "studiendekan"
+  },
+  {
+    "username": "studienamt",
+    "password": "studienamt_passwort",
+    "role": "studienamt"
+  },
+  {
+    "username": "dekan",
+    "password": "dekan_passwort",
+    "role": "dekan"
+  }
+]

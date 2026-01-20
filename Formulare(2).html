@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Generator mit JSON</title>
+    <!-- Externe CSS-Datei (keine Inline-Stile im HTML) -->
+    <link rel="stylesheet" href="formulare.css" />
+  </head>
+  <body id="body-root">
+    <div class="control-bar">
+      <div class="user-info">
+        <span>Angemeldet als: <strong id="currentUser"></strong></span>
+        <!-- Kein onclick-Attribut mehr; JS hängt Eventlistener an -->
+        <button id="logout-btn" class="btn btn-danger" type="button">
+          Abmelden
+        </button>
+      </div>
+
+      <img alt="HTWK Logo" src="https://upload.wikimedia.org/wikipedia/de/1/16/HTWK-Logo.svg" class="logo" />
+      <!-- Kein onclick; JS behandelt Navigation -->
+      <button id="pdf-manager-btn" class="btn" type="button">
+        PDF Manager
+      </button>
+    </div>
+
+    <div class="container">
+      <h1 class="page-title">Generator mit JSON</h1>
+      
+      <!-- Semester Controls unter dem Titel -->
+      <div class="semester-controls">
+        <label for="semester-art"> Semester: </label>
+        <select id="semester-art">
+          <option disabled selected value="">-- bitte wählen --</option>
+          <option value="Wintersemester">Wintersemester</option>
+          <option value="Sommersemester">Sommersemester</option>
+        </select>
+        <label for="semester-jahr"> Jahr(e): </label>
+        <input id="semester-jahr" type="text" value="2025/26" />
+        <label for="planungswochen">
+          Planungswochen:
+        </label>
+        <input id="planungswochen" type="text" value="42–58" />
+      </div>
+
+      <div class="input-section">
+        <h2>JSON Eingabe</h2>
+        <p>Geben Sie Ihre Daten im JSON Format ein:</p>
+        
+        <!-- Beispiel-Buttons mit Klassen statt Inline-Stilen -->
+        <div class="example-buttons">
+          <button id="switch-template-btn" class="btn btn-primary" type="button">Wechsel zu Dozentenblatt</button>
+          <button id="example-btn" class="btn btn-secondary" type="button">Beispiel Zuarbeitsblatt</button>
+          <button id="example-dozentenblatt-btn" class="btn btn-secondary" type="button">Beispiel Dozentenblatt</button>
+        </div>
+
+        <textarea id="rdf-input" placeholder='Beispiel:
+{
+  "modul": {
+    "fakultaet": "FIM",
+    "studiengang": "BIB",
+    "fs": "3",
+    "gruppen": "13 BIB 1 - 5",
+    "modulnr": "1300",
+    "modulname": "BAUKO I",
+    "lehrveranstaltung": "Einführung in die Bibliothekswissenschaft",
+    "swsVorlesung": "2",
+    "swsSeminar": "1",
+    "swsPraktikum": "2",
+    "raumV": "Hörsaal 123",
+    "raumS": "Seminarraum 45",
+    "raumP": "Labor 67",
+    "technikV": "Beamer, PC",
+    "technikS": "Whiteboard",
+    "technikP": "Spezialausrüstung",
+    "planungshinweise": "Gleichmäßige Verteilung auf gerade/ungerade Wochen, Vorlesung zwingend vor Seminar",
+    "kwHinweise": "KW42, KW43, KW44, KW45, KW46, KW47, KW48, KW49, KW50, KW51, KW52, KW01, KW02, KW03, KW04, KW05, KW06",
+    "name": "Prof. Dr. Müller",
+    "unterschrift": "Fadi Mkhalale",
+    "rueckgabedatum": "15.05.2025",
+    "profUnterschrift": "Prof. Dr. Mustermann",
+    "dekanUnterschrift": "Prof. Dr. Schmidt",
+    "datumUnterschrift": "15.05.2025",
+    "lesende": {
+      "titel": "Prof. Dr.",
+      "name": "Schmidt",
+      "gruppen": "1-5",
+      "erlaeuterung": "Gemeinsame Vorlesung für alle Gruppen, montags 09:15-10:45 Uhr"
+    },
+    "seminarleiter": [
+      {
+        "titel": "Dr.",
+        "name": "Meier",
+        "gruppen": "1-3",
+        "erlaeuterung": "Seminar in 2 Gruppen, Blockveranstaltung gerader Wochen, Dienstag 13:30-17:00 Uhr"
+      },
+      {
+        "titel": "M.Sc.",
+        "name": "Schulze",
+        "gruppen": "4-5",
+        "erlaeuterung": "Seminar in 2 Gruppen, Blockveranstaltung ungerader Wochen, Mittwoch 13:30-17:00 Uhr"
+      }
+    ],
+    "praktikumsleiter": {
+      "titel": "",
+      "name": "Wagner",
+      "gruppen": "1-5",
+      "erlaeuterung": "Praktikum in Einzelgruppen, wöchentlich wechselnd: Gruppe 1+2 (KW42,44,...), Gruppe 3+4 (KW43,45,...), Gruppe 5 (flexibel)"
+    }
+  }
+}'></textarea>
+
+        <div class="saved-section">
+          <h3>Daten (.json)</h3>
+
+          <label for="saved-dozenten" style="display: block; margin-top: 6px;">Daten (.json)</label>
+          
+          <div class="select-with-input">
+            <select id="saved-dozenten">
+              <option value="">-- keine ausgewählt --</option>
+            </select>
+            
+            <input type="text" id="dozenten-input" placeholder="ID eingeben">
+            
+            <div class="saved-data-controls">
+              <button id="load-saved-btn" type="button" class="btn">Auswahl in Eingabe übernehmen</button>
+              <button id="refresh-saved-btn" type="button" class="btn btn-secondary">Liste neu laden</button>
+            </div>
+          </div>
+        </div>
+
+        <button id="parse-btn" class="btn">Formular aus Eingabe füllen</button>
+        <button id="generate-pdf" class="btn">PDF generieren</button>
+        <button id="reset-form" class="btn">Eingabe zurücksetzen</button>
+      </div>
+      
+      <div class="output-section">
+        <h2>Vorschau</h2>
+        <!-- Checkboxen für Studienamt, Dekan, Studiendekan -->
+        <div class="checkbox-group control" id="approval-area">
+          <label>
+            <input type="checkbox" id="checkbox-studienamt">
+            Studienamt
+          </label>
+          <label>
+            <input type="checkbox" id="checkbox-dekan">
+            Dekan
+          </label>
+          <label>
+            <input type="checkbox" id="checkbox-studiendekan">
+            Studiendekan
+          </label>
+
+          <!-- Neuer Button zum Speichern der Auswahl -->
+          <button id="save-approval-btn" type="button" class="btn">Speichern</button>
+        </div>
+        
+        <div id="approval-status" style="margin-top:8px;font-size:13px;color:#374151"></div>
+
+        <div class="form-container zuarbeitsblatt" id="form-container"></div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Externes JS, alle Inline-Skripte entfernt -->
+
+    <script src="formulare.js" defer></script>
+  </body>
+</html>
