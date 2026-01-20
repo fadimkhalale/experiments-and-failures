@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Generator mit RDF
+  </title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+   <link rel="stylesheet" href="css/formulare.css">
+</head>
+ <body id="body-root">
+  <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+   <img alt="HTWK Logo" src="https://upload.wikimedia.org/wikipedia/de/1/16/HTWK-Logo.svg" style="height: 50px;"/>
+   <button onclick="window.location.href='pdf-manager.html'" style="background-color: #4CAF50; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+    PDF Manager
+   </button>
+  </div>
+  <div style="margin-bottom: 10px;">
+   <label for="semester-art">
+    Semester:
+   </label>
+   <select id="semester-art">
+    <option disabled="" selected="" value="">
+     -- bitte wählen --
+    </option>
+    <option value="Wintersemester">
+     Wintersemester
+    </option>
+    <option value="Sommersemester">
+     Sommersemester
+    </option>
+   </select>
+   <label for="semester-jahr" style="margin-left:10px;">
+    Jahr(e):
+   </label>
+   <input id="semester-jahr" style="width: 80px;" type="text" value="2025/26"/>
+   <label for="planungswochen" style="margin-left:10px;">
+    Planungswochen:
+   </label>
+   <input id="planungswochen" style="width: 80px;" type="text" value="42–58"/>
+  </div>
+  <button id="switch-template-btn" onclick="switchTemplate()" style="background:#007bff;color:white;padding:10px 15px;border:none;border-radius:5px;margin-bottom:10px;cursor:pointer;">
+   Wechsel zu Dozentenblatt
+  </button>
+  <div class="container">
+   <h1>
+    Generator mit RDF
+   </h1>
+   <div class="input-section">
+    <h2>
+     RDF/Turtle Eingabe
+    </h2>
+    <p>
+     Geben Sie Ihre Zuarbeitsdaten im Turtle (TTL) Format ein:
+    </p>
+    <button id="example-btn" style="background-color: #6c757d; margin-top: 10px;">
+     Beispiel Zuarbeitsblatt
+    </button>
+    <button id="example-dozentenblatt-btn" style="background-color: #6c757d; margin-top: 10px;">
+     Beispiel Dozentenblatt
+    </button>
+    
+    <textarea -="" ."="" 1="" 2="" 5\"="" ;="" [="" \"0\"="" \"1-3\"="" \"1-5\"="" \"13="" \"1300\"="" \"1\"="" \"2\"="" \"\"="" \"bauko="" \"beamer,="" \"bib\"="" \"dr.\"="" \"einführung="" \"gemeinsame="" \"gleichmäßige="" \"hörsaal\"="" \"kw42-52,="" \"meyer\"="" \"mustermann\"="" \"praktikum="" \"prof.\"="" \"schmidt\"="" \"seminar="" ]="" alle="" auf="" bib="" bibliothekswissenschaft\"="" die="" einzelgruppen\"="" ex:erlaeuterung="" ex:fs="" ex:gruppen="" ex:kwhinweise="" ex:lehrveranstaltung="" ex:lesende="" ex:modulname="" ex:modulnr="" ex:name="" ex:planungshinweise="" ex:praktikumsleiter="" ex:raum="" ex:seminarleiter="" ex:studiengang="" ex:swspraktikum="" ex:swsseminar="" ex:swsvorlesung="" ex:technik="" ex:titel="" fim\"="" für="" gerade="" gruppen\"="" i\"="" id="rdf-input" in="" kw01-06\"="" pc\"="" placeholder="Beispiel:
+@prefix ex: &lt;http://example.org/&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+
+ex:modul
+  ex:fakultaet \" ungerade="" verteilung="" vorlesung="" wochen\"=""></textarea>
+    <button id="parse-btn">
+     Formular aus RDF füllen
+    </button>
+    <button id="generate-pdf">
+     PDF generieren
+    </button>
+    <button id="reset-form">
+     Formular zurücksetzen
+    </button>
+   </div>
+   <div class="output-section">
+    <h2>
+     Vorschau
+    </h2>
+    <div class="form-container zuarbeitsblatt" id="form-container">
+     <!-- The complete form will be inserted here by JavaScript -->
+    </div>
+   </div>
+  </div>
+  
+  
+   <script src="js/formulare.js"></script>
+</body>
+</html>

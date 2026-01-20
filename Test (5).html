@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dozentenblatt PDF Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            font-family: monospace;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0055aa;
+        }
+        .preview {
+            border: 1px solid #ccc;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dozentenblatt PDF Generator</h1>
+    <div class="container">
+        <div>
+            <h2>RDF/Turtle Daten eingeben:</h2>
+            <textarea id="rdfInput" placeholder="Fügen Sie hier die RDF/Turtle Daten ein..."></textarea>
+        </div>
+        <button id="generatePdf">PDF generieren</button>
+        <div class="preview">
+            <h2>PDF Vorschau (statisch)</h2>
+            <p>Das generierte PDF wird genau wie das Vorlage-PDF aussehen.</p>
+            <img src="https://via.placeholder.com/800x1000?text=PDF+Vorschau+würde+hier+erscheinen" alt="PDF Vorschau" style="width: 100%; border: 1px solid #ccc;">
+        </div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        
+        document.getElementById('generatePdf').addEventListener('click', function() {
+            const rdfData = document.getElementById('rdfInput').value;
+            
+            if (!rdfData.trim()) {
+                alert("Bitte RDF/Turtle Daten eingeben!");
+                return;
+            }
+            
+            try {
+                // Parse the RDF data (in a real implementation, you'd use an RDF parser)
+                const data = parseRdfData(rdfData);
+                
+                // Generate PDF
+                generatePdf(data);
+            } catch (error) {
+                console.error("Error generating PDF:", error);
+                alert("Fehler beim Generieren des PDFs: " + error.message);
+            }
+        });
+        
+        function parseRdfData(rdfData) {
+            // In a real implementation, you would parse the RDF/Turtle data properly
+            // For this example, we'll just return mock data
+            
+            // Extract data from RDF (simplified for this example)
+            // This would be replaced with proper RDF parsing in production
+            const nameMatch = rdfData.match(/foaf:name "([^"]+)"/);
+            const emailMatch = rdfData.match(/foaf:mbox "([^"]+)"/);
+            
+            return {
+                title: "Prof. Dr. rer. nat.",
+                firstName: "Thomas",
+                lastName: "Riechert",
+                faculty: "IM(I)",
+                fullTime: true,
+                email: emailMatch ? emailMatch[1] : "thomas.riechert@htwk-leipzig.de",
+                phone: "6413",
+                courses: [
+                    {
+                        no: 1,
+                        faculty: "IM(I)",
+                        program: "MIB",
+                        semester: "4.",
+                        groups: "22MIB-1+2 22MIB-BIN",
+                        moduleNo: "C902",
+                        moduleName: "Wissenschaftskommunikation",
+                        lecture: 1,
+                        seminar: 2,
+                        practical: 0,
+                        digital: "nein",
+                        note: "3 Seminargruppen 22MIB-2 F.Stolze"
+                    },
+                    {
+                        no: 2,
+                        faculty: "IM(I)",
+                        program: "INB+ MIB",
+                        semester: "4.",
+                        groups: "22INB-1+2+3 22MIB-1+2 22MIB-BIN",
+                        moduleNo: "C249",
+                        moduleName: "Semantic Web",
+                        lecture: 2,
+                        seminar: 4,
+                        practical: 0,
+                        digital: "nein",
+                        note: "2 Gruppen"
+                    }
+                ],
+                blockedTimes: [
+                    { weeks: "aw", days: "Mo-Fr", time: "Bis 8:00" },
+                    { weeks: "aw", days: "Mo-Fr", time: "Ab 17:00" }
+                ],
+                researchDay: { day: "Donnerstag", type: "D" }
+            };
+        }
+        
+        function generatePdf(data) {
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Set font
+            doc.setFont("helvetica");
+            
+            // Page 1 - Header
+            doc.setFontSize(10);
+            doc.text("Abgabetermin an DS: 20.11.2023", 15, 10);
+            doc.text("Eingegangen bei DS:", 15, 15);
+            
+            // HTWK Logo and title
+            doc.setFontSize(14);
+            doc.text("HTWK Leipzig", 15, 25);
+            doc.setFontSize(16);
+            doc.text("Dozentenblatt", 80, 25);
+            doc.setFontSize(14);
+            doc.text("Sommersemester 2024", 150, 25);
+            
+            doc.setFontSize(10);
+            doc.text("DS", 15, 32);
+            doc.text("Präsenzplanung", 25, 32);
+            doc.text("(ggf. mit digitalen Anteilen)", 25, 37);
+            
+            doc.setFontSize(8);
+            doc.text("Jeder Lehrende füllt bitte nur ein Dozentenblatt aus!", 15, 45);
+            
+            // Personal information
+            doc.setFontSize(12);
+            doc.text(data.title, 15, 55);
+            doc.text(data.firstName, 60, 55);
+            doc.text(data.lastName, 90, 55);
+            doc.text("Titel", 15, 50);
+            doc.text("Vorname", 60, 50);
+            doc.text("Name", 90, 50);
+            
+            doc.text("Fakultät/Bereich: □ □ □ ☒ □ □ □ □ □", 15, 65);
+            doc.text("FAS FB FDIT FIM FING FWW HSZ MNZ Gast HonProf", 15, 70);
+            
+            doc.text(`Arbeitszeit (Pflichtangabe, außer Gast) ${data.fullTime ? '☒' : '□'} Vollzeit ${data.fullTime ? '□' : '☒'} Teilzeit`, 15, 80);
+            
+            doc.text(`E-Mailadresse (Pflichtangabe) ${data.email}`, 15, 90);
+            
+            if (data.phone) {
+                doc.text(`Telefonisch erreichbar unter (optional) ${data.phone}`, 15, 100);
+            }
+            
+            doc.text("Bitte geben Sie in der Tabelle Ihre Einsätze (auch Bedienfunktionen) an!", 15, 110);
+            
+            // Courses table
+            doc.text("Durchzuführende Lehrveranstaltungen", 15, 120);
+            
+            const headers = [
+                "lfd. Nr.",
+                "Fak",
+                "Stg.",
+                "FS",
+                "Gruppen",
+                "Modulnr./ LE",
+                "Modulname (Kürzel)",
+                "Reale SWS (Präsenz)",
+                "",
+                "",
+                "Digital",
+                "Bemerkung"
+            ];
+            
+            const subHeaders = ["", "", "", "", "", "", "", "V", "S", "P", "", ""];
+            
+            const coursesData = data.courses.map(course => [
+                course.no,
+                course.faculty,
+                course.program,
+                course.semester,
+                course.groups,
+                course.moduleNo,
+                course.moduleName,
+                course.lecture,
+                course.seminar,
+                course.practical,
+                course.digital,
+                course.note
+            ]);
+            
+            doc.autoTable({
+                startY: 125,
+                head: [headers, subHeaders],
+                body: coursesData,
+                margin: { left: 15 },
+                styles: { fontSize: 8 },
+                columnStyles: {
+                    0: { cellWidth: 10 },
+                    1: { cellWidth: 10 },
+                    2: { cellWidth: 10 },
+                    3: { cellWidth: 8 },
+                    4: { cellWidth: 25 },
+                    5: { cellWidth: 15 },
+                    6: { cellWidth: 25 },
+                    7: { cellWidth: 8 },
+                    8: { cellWidth: 8 },
+                    9: { cellWidth: 8 },
+                    10: { cellWidth: 10 },
+                    11: { cellWidth: 20 }
+                }
+            });
+            
+            // Page 1 footer notes
+            doc.setFontSize(8);
+            doc.text("Reale SWS = tatsächlich zu realisierende SWS", 15, doc.autoTable.previous.finalY + 10);
+            doc.text("Beispiel: 2 SWS Seminar für 5 SG BIB einzeln durchgeführt ergibt 10 zu realisierende SWS", 15, doc.autoTable.previous.finalY + 15);
+            doc.text("oder", 15, doc.autoTable.previous.finalY + 20);
+            doc.text("2 SWS Vorlesung für 5 SG BIB, in 2 Blöcken mit jeweils 3 bzw. 2 SG durchgeführt,", 15, doc.autoTable.previous.finalY + 25);
+            doc.text("ergibt 4 zu realisierende SWS", 15, doc.autoTable.previous.finalY + 30);
+            
+            doc.setFontSize(10);
+            doc.text("Zu jedem aufgeführten Modul/Teilmodul muss ein Zuarbeitsbogen ausgefüllt werden.", 15, doc.autoTable.previous.finalY + 40);
+            doc.text("Mehrere an einem Teilmodul beteiligte Dozenten füllen bitte einen gemeinsamen Zuarbeitsbogen aus!", 15, doc.autoTable.previous.finalY + 45);
+            
+            // Add new page for additional content
+            doc.addPage();
+            
+            // Page 2 - Teaching forms
+            doc.setFontSize(12);
+            doc.text("Lehrformen: Präsenz (mit digitalen Anteilen, wenn didaktisch vorteilhaft)", 15, 20);
+            
+            doc.setFontSize(10);
+            doc.text("- Regelfall: Präsenz (es wird empfohlen, bei Bedarf eine virtuelle Teilnahme zu ermöglichen (hybride LV))", 15, 30);
+            doc.text("- Digital synchron (Wegezeiten für Studierende beachten)", 15, 40);
+            doc.text("- Digital asynchron", 15, 50);
+            
+            doc.setFontSize(12);
+            doc.text("Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen.", 15, 70);
+            
+            // Add more page 2 content...
+            
+            // Add new page for blocked times and research day
+            doc.addPage();
+            
+            // Page 3 - Blocked times
+            doc.setFontSize(14);
+            doc.text("HTWK Leipzig", 15, 15);
+            doc.text("DS", 15, 25);
+            doc.setFontSize(16);
+            doc.text("Anlage 1 zum Dozentenblatt", 70, 25);
+            doc.setFontSize(14);
+            doc.text("Sommersemester 2024", 150, 25);
+            
+            doc.setFontSize(12);
+            doc.text(data.title, 15, 40);
+            doc.text(data.firstName, 60, 40);
+            doc.text(data.lastName, 90, 40);
+            doc.text("Titel", 15, 35);
+            doc.text("Vorname", 60, 35);
+            doc.text("Name", 90, 35);
+            
+            doc.text("Notwendige regelmäßige Sperrzeiten für interne Dozenten sind:", 15, 60);
+            
+            const blockedTimesData = data.blockedTimes.map(time => [
+                time.weeks,
+                time.days,
+                time.time
+            ]);
+            
+            doc.autoTable({
+                startY: 65,
+                head: [["Wochen aw/gw/uw", "Wochentag Mo/Di/Mi/Do/Fr", "Uhrzeit Bis/Ab"]],
+                body: blockedTimesData,
+                margin: { left: 15 },
+                styles: { fontSize: 10 }
+            });
+            
+            // Research day
+            doc.text("Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)", 15, doc.autoTable.previous.finalY + 15);
+            
+            const days = ["Tag ist egal", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"];
+            const researchDayY = doc.autoTable.previous.finalY + 25;
+            
+            days.forEach((day, i) => {
+                const x = 15 + (i * 30);
+                doc.text(day, x, researchDayY);
+                
+                if (data.researchDay && data.researchDay.day === day) {
+                    doc.text(`☒ ${data.researchDay.type}`, x, researchDayY + 5);
+                } else {
+                    doc.text(`□ D □ F`, x, researchDayY + 5);
+                }
+            });
+            
+            // Save the PDF
+            doc.save(`Dozentenblatt_${data.lastName}_SoSe_2024.pdf`);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dozentenblatt Generator mit RDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/rdf-ext/1.3.0/rdf-ext.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .input-section, .output-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+        /* Include all the CSS from the previous form here */
+        /* ... (paste all the CSS from the previous solution here) ... */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dozentenblatt Generator mit RDF</h1>
+        
+        <div class="input-section">
+            <h2>RDF/Turtle Eingabe</h2>
+            <p>Geben Sie Ihre Dozentendaten im Turtle (TTL) Format ein:</p>
+            <textarea id="rdf-input" placeholder="Beispiel:
+@prefix ex: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:dozent
+  ex:titel \"Prof.\" ;
+  ex:vorname \"Max\" ;
+  ex:nachname \"Mustermann\" ;
+  ex:fakultaet ex:fim ;
+  ex:arbeitszeit \"Vollzeit\" ;
+  ex:email \"max.mustermann@htwk-leipzig.de\" ;
+  ex:telefon \"+49 341 123456\" ;
+  ex:lehrveranstaltung [
+    ex:ifdNr \"1\" ;
+    ex:fak \"B\" ;
+    ex:stg \"BIB\" ;
+    ex:fs \"1\" ;
+    ex:gruppen \"13 BIB 1 - 5\" ;
+    ex:modulnr \"1300\" ;
+    ex:modulname \"BAUKO I\" ;
+    ex:v \"2\" ;
+    ex:s \"4\" ;
+    ex:p \"10\" ;
+    ex:digital \"\" ;
+    ex:bemerkung \"Kurze Anmerkung\" 
+  ] ."></textarea>
+            
+            <button id="parse-btn">Formular aus RDF füllen</button>
+            <button id="generate-pdf">PDF generieren</button>
+        </div>
+        
+        <div class="output-section">
+            <h2>Dozentenblatt Vorschau</h2>
+            <div id="form-container" class="form-container">
+                <!-- The form from the previous solution will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Insert the form HTML from the previous solution
+        document.getElementById('form-container').innerHTML = `
+            <!-- Paste the entire HTML form from the previous solution here -->
+            <!-- Make sure to include all the form fields -->
+        `;
+
+        document.getElementById('parse-btn').addEventListener('click', async function() {
+            const ttlData = document.getElementById('rdf-input').value;
+            
+            try {
+                // Parse the RDF data
+                const dataset = await rdf.dataset().import(
+                    rdf.formats.parsers.import('text/turtle', ttlData)
+                );
+                
+                // Extract data from RDF
+                const dozent = dataset.match(null, rdf.namedNode('http://example.org/titel'))[0].subject;
+                
+                // Fill basic information
+                document.querySelector('[placeholder="Titel"]').value = 
+                    dataset.match(dozent, rdf.namedNode('http://example.org/titel'))[0]?.object.value || '';
+                document.querySelector('[placeholder="Vorname"]').value = 
+                    dataset.match(dozent, rdf.namedNode('http://example.org/vorname'))[0]?.object.value || '';
+                document.querySelector('[placeholder="Name"]').value = 
+                    dataset.match(dozent, rdf.namedNode('http://example.org/nachname'))[0]?.object.value || '';
+                
+                // Fill email and phone
+                document.querySelector('[type="email"]').value = 
+                    dataset.match(dozent, rdf.namedNode('http://example.org/email'))[0]?.object.value || '';
+                document.querySelector('[type="tel"]').value = 
+                    dataset.match(dozent, rdf.namedNode('http://example.org/telefon'))[0]?.object.value || '';
+                
+                // Fill faculty checkboxes
+                const faculty = dataset.match(dozent, rdf.namedNode('http://example.org/fakultaet'))[0]?.object.value;
+                if (faculty) {
+                    const facultyShort = faculty.split('/').pop().toUpperCase();
+                    document.querySelector(`input[value="${facultyShort}"]`).checked = true;
+                }
+                
+                // Fill work time
+                const workTime = dataset.match(dozent, rdf.namedNode('http://example.org/arbeitszeit'))[0]?.object.value;
+                if (workTime === "Vollzeit") {
+                    document.getElementById('fulltime').checked = true;
+                } else if (workTime === "Teilzeit") {
+                    document.getElementById('parttime').checked = true;
+                }
+                
+                // Fill teaching activities
+                const activities = dataset.match(dozent, rdf.namedNode('http://example.org/lehrveranstaltung'));
+                activities.forEach((act, index) => {
+                    const activity = act.object;
+                    
+                    // Get the first row in the table
+                    const row = document.querySelector('table tbody tr');
+                    
+                    // Fill each field
+                    row.cells[0].querySelector('input').value = 
+                        dataset.match(activity, rdf.namedNode('http://example.org/ifdNr'))[0]?.object.value || '';
+                    row.cells[1].querySelector('input').value = 
+                        dataset.match(activity, rdf.namedNode('http://example.org/fak'))[0]?.object.value || '';
+                    row.cells[2].querySelector('input').value = 
+                        dataset.match(activity, rdf.namedNode('http://example.org/stg'))[0]?.object.value || '';
+                    // ... continue for all fields
+                });
+                
+                alert('Formular erfolgreich aus RDF-Daten gefüllt!');
+            } catch (error) {
+                console.error('Error parsing RDF:', error);
+                alert('Fehler beim Parsen der RDF-Daten: ' + error.message);
+            }
+        });
+
+        document.getElementById('generate-pdf').addEventListener('click', function() {
+            const element = document.getElementById('form-container');
+            const opt = {
+                margin: 10,
+                filename: 'dozentenblatt.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            html2pdf().from(element).set(opt).save();
+        });
+    </script>
+</body>
+</html>

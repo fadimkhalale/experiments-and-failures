@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTWK Dozentenblatt - Digital</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #003366;
+            text-align: center;
+        }
+        .form-section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        .form-section h2 {
+            color: #003366;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 5px;
+        }
+        .form-row {
+            display: flex;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .btn {
+            background-color: #003366;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background-color: #004080;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .hidden {
+            display: none;
+        }
+        #rdfOutput {
+            width: 100%;
+            height: 300px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f8f9fa;
+        }
+        .time-restriction {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .add-row-btn {
+            background-color: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .remove-row-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .faculty-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .faculty-checkbox {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HTWK Leipzig - Dozentenblatt (Sommersemester 2024)</h1>
+        
+        <div class="form-section">
+            <h2>Allgemeine Informationen</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="title">Titel</label>
+                    <input type="text" id="title" value="Prof. Dr. rer. nat.">
+                </div>
+                <div class="form-group">
+                    <label for="firstName">Vorname</label>
+                    <input type="text" id="firstName" value="Thomas">
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Name</label>
+                    <input type="text" id="lastName" value="Riechert">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Fakultät/Bereich</label>
+                    <div class="faculty-checkboxes">
+                        <div class="faculty-checkbox">
+                            <input type="checkbox" id="fas" name="faculty">
+                            <label for="fas">FAS</label>
+                        </div>
+                        <div class="faculty-checkbox">
+                            <input type="checkbox" id="fb" name="faculty">
+                            <label for="fb">FB</label>
+                        </div>
+                        <div class="faculty-checkbox">
+                            <input type="checkbox" id="fdit" name="faculty" checked>
+                            <label for="fdit">FDIT</label>
+                        </div>
+                        <div class="faculty-checkbox">
+                            <input type="checkbox" id="fim" name="faculty">
+                            <label for="fim">FIM</label>
+                        </div>
+                        <div class="faculty-checkbox">
+                            <input type="checkbox" id="fing" name="faculty">
+                            <label for="fing">FING</label>
+                        </div>
+                        <div class="faculty-checkbox">
+                            <input type="checkbox" id="fww" name="faculty">
+                            <label for="fww">FWW</label>
+                        </div>
+                        <div class="faculty-checkbox">
+                            <input type="checkbox" id="hsz" name="faculty">
+                            <label for="hsz">HSZ</label>
+                        </div>
+                        <div class="faculty-checkbox">
+                            <input type="checkbox" id="mnz" name="faculty">
+                            <label for="mnz">MNZ</label>
+                        </div>
+                        <div class="faculty-checkbox">
+                            <input type="checkbox" id="gast" name="faculty">
+                            <label for="gast">Gast</label>
+                        </div>
+                        <div class="faculty-checkbox">
+                            <input type="checkbox" id="honprof" name="faculty">
+                            <label for="honprof">HonProf</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Arbeitszeit (Pflichtangabe, außer Gast)</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="fullTime" checked>
+                        <label for="fullTime">Vollzeit</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="partTime">
+                        <label for="partTime">Teilzeit</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">E-Mailadresse (Pflichtangabe)</label>
+                    <input type="email" id="email" value="thomas.riechert@htwk-leipzig.de">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Telefonisch erreichbar unter (optional)</label>
+                    <input type="tel" id="phone" value="6413">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="submissionDate">Abgabetermin an DS</label>
+                    <input type="date" id="submissionDate" value="2023-11-20">
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>Durchzuführende Lehrveranstaltungen</h2>
+            <table id="coursesTable">
+                <thead>
+                    <tr>
+                        <th>lfd. Nr.</th>
+                        <th>Fak</th>
+                        <th>Stg.</th>
+                        <th>FS</th>
+                        <th>Gruppen</th>
+                        <th>Modulnr./ LE</th>
+                        <th>Modulname (Kürzel)</th>
+                        <th>Reale SWS (Präsenz)</th>
+                        <th>Digital</th>
+                        <th>Bemerkung</th>
+                        <th>Aktion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td><input type="text" value="IM(I)" style="width: 50px;"></td>
+                        <td><input type="text" value="MIB" style="width: 50px;"></td>
+                        <td><input type="text" value="4." style="width: 30px;"></td>
+                        <td><input type="text" value="22MIB-1+2 22MIB-BIN" style="width: 150px;"></td>
+                        <td><input type="text" value="C902" style="width: 50px;"></td>
+                        <td><input type="text" value="Wissenschaftskommunikation" style="width: 150px;"></td>
+                        <td>
+                            V: <input type="text" value="1" style="width: 20px;">
+                            S: <input type="text" value="2" style="width: 20px;">
+                            P: <input type="text" value="0" style="width: 20px;">
+                        </td>
+                        <td><select><option value="nein" selected>nein</option><option value="ja">ja</option></select></td>
+                        <td><input type="text" value="3 Seminargruppen 22MIB-2 F.Stolze" style="width: 200px;"></td>
+                        <td><button class="remove-row-btn">Entfernen</button></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td><input type="text" value="IM(I)" style="width: 50px;"></td>
+                        <td><input type="text" value="INB+ MIB" style="width: 70px;"></td>
+                        <td><input type="text" value="4." style="width: 30px;"></td>
+                        <td><input type="text" value="22INB-1+2+3 22MIB-1+2 22MIB-BIN" style="width: 150px;"></td>
+                        <td><input type="text" value="C249" style="width: 50px;"></td>
+                        <td><input type="text" value="Semantic Web" style="width: 150px;"></td>
+                        <td>
+                            V: <input type="text" value="2" style="width: 20px;">
+                            S: <input type="text" value="4" style="width: 20px;">
+                            P: <input type="text" value="0" style="width: 20px;">
+                        </td>
+                        <td><select><option value="nein" selected>nein</option><option value="ja">ja</option></select></td>
+                        <td><input type="text" value="2 Gruppen" style="width: 200px;"></td>
+                        <td><button class="remove-row-btn">Entfernen</button></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td><input type="text" value="IM(I)" style="width: 50px;"></td>
+                        <td><input type="text" value="INB+ MIB" style="width: 70px;"></td>
+                        <td><input type="text" value="4." style="width: 30px;"></td>
+                        <td><input type="text" value="22INB-1+2+3 22MIB-1+2 22MIB-BIN" style="width: 150px;"></td>
+                        <td><input type="text" value="C977" style="width: 50px;"></td>
+                        <td><input type="text" value="E-Business" style="width: 150px;"></td>
+                        <td>
+                            V: <input type="text" value="2" style="width: 20px;">
+                            S: <input type="text" value="4" style="width: 20px;">
+                            P: <input type="text" value="0" style="width: 20px;">
+                        </td>
+                        <td><select><option value="nein" selected>nein</option><option value="ja">ja</option></select></td>
+                        <td><input type="text" value="2 Gruppen" style="width: 200px;"></td>
+                        <td><button class="remove-row-btn">Entfernen</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="add-row-btn" id="addCourseBtn">Lehrveranstaltung hinzufügen</button>
+        </div>
+        
+        <div class="form-section">
+            <h2>Zeitliche Einschränkungen</h2>
+            <div class="time-restriction">
+                <h3>Notwendige regelmäßige Sperrzeiten für interne Dozenten sind:</h3>
+                <table id="timeRestrictionsTable">
+                    <thead>
+                        <tr>
+                            <th>Wochen aw/gw/uw</th>
+                            <th>Wochentag Mo/Di/Mi/Do/Fr</th>
+                            <th>Uhrzeit Bis/Ab</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" value="aw" style="width: 80px;"></td>
+                            <td><input type="text" value="Mo-Fr" style="width: 80px;"></td>
+                            <td><input type="text" value="Bis 8:00" style="width: 100px;"></td>
+                            <td><button class="remove-row-btn">Entfernen</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" value="aw" style="width: 80px;"></td>
+                            <td><input type="text" value="Mo-Fr" style="width: 80px;"></td>
+                            <td><input type="text" value="Ab 17:00" style="width: 100px;"></td>
+                            <td><button class="remove-row-btn">Entfernen</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="add-row-btn" id="addRestrictionBtn">Sperrzeit hinzufügen</button>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)</label>
+                    <table>
+                        <tr>
+                            <th>Tag ist egal</th>
+                            <th>Montag</th>
+                            <th>Dienstag</th>
+                            <th>Mittwoch</th>
+                            <th>Donnerstag</th>
+                            <th>Freitag</th>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" id="anyDay"></td>
+                            <td>
+                                <input type="checkbox" id="monD"> D
+                                <input type="checkbox" id="monF"> F
+                            </td>
+                            <td>
+                                <input type="checkbox" id="tueD"> D
+                                <input type="checkbox" id="tueF"> F
+                            </td>
+                            <td>
+                                <input type="checkbox" id="wedD"> D
+                                <input type="checkbox" id="wedF"> F
+                            </td>
+                            <td>
+                                <input type="checkbox" id="thuD" checked> D
+                                <input type="checkbox" id="thuF"> F
+                            </td>
+                            <td>
+                                <input type="checkbox" id="friD"> D
+                                <input type="checkbox" id="friF"> F
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>Hinweise zur Semesterplanung</h2>
+            <div class="form-row">
+                <div class="form-group" style="width: 100%;">
+                    <label for="notes">Wichtige Hinweise zur Semesterplanung:</label>
+                    <textarea id="notes" style="width: 100%; height: 100px;">Keine Sperrzeiten!!!</textarea>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>RDF/Turtle Export</h2>
+            <div class="form-row">
+                <div class="form-group" style="width: 100%;">
+                    <textarea id="rdfOutput" readonly></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-row" style="justify-content: center; margin-top: 30px;">
+            <button class="btn" id="generateRdfBtn">RDF generieren</button>
+            <button class="btn" id="generatePdfBtn">PDF generieren</button>
+            <button class="btn btn-secondary" id="resetFormBtn">Formular zurücksetzen</button>
+        </div>
+    </div>
+
+    <script>
+        // Wait for the jsPDF library to load
+        document.addEventListener('DOMContentLoaded', function() {
+            const { jsPDF } = window.jspdf;
+            
+            // Add course row
+            document.getElementById('addCourseBtn').addEventListener('click', function() {
+                const table = document.getElementById('coursesTable').getElementsByTagName('tbody')[0];
+                const rowCount = table.rows.length;
+                const newRow = table.insertRow();
+                
+                newRow.innerHTML = `
+                    <td>${rowCount + 1}</td>
+                    <td><input type="text" style="width: 50px;"></td>
+                    <td><input type="text" style="width: 50px;"></td>
+                    <td><input type="text" style="width: 30px;"></td>
+                    <td><input type="text" style="width: 150px;"></td>
+                    <td><input type="text" style="width: 50px;"></td>
+                    <td><input type="text" style="width: 150px;"></td>
+                    <td>
+                        V: <input type="text" value="0" style="width: 20px;">
+                        S: <input type="text" value="0" style="width: 20px;">
+                        P: <input type="text" value="0" style="width: 20px;">
+                    </td>
+                    <td><select><option value="nein" selected>nein</option><option value="ja">ja</option></select></td>
+                    <td><input type="text" style="width: 200px;"></td>
+                    <td><button class="remove-row-btn">Entfernen</button></td>
+                `;
+                
+                // Add event listener to the new remove button
+                newRow.querySelector('.remove-row-btn').addEventListener('click', function() {
+                    table.deleteRow(newRow.rowIndex - 1);
+                    updateRowNumbers();
+                });
+            });
+            
+            // Add time restriction row
+            document.getElementById('addRestrictionBtn').addEventListener('click', function() {
+                const table = document.getElementById('timeRestrictionsTable').getElementsByTagName('tbody')[0];
+                const newRow = table.insertRow();
+                
+                newRow.innerHTML = `
+                    <td><input type="text" style="width: 80px;"></td>
+                    <td><input type="text" style="width: 80px;"></td>
+                    <td><input type="text" style="width: 100px;"></td>
+                    <td><button class="remove-row-btn">Entfernen</button></td>
+                `;
+                
+                // Add event listener to the new remove button
+                newRow.querySelector('.remove-row-btn').addEventListener('click', function() {
+                    table.deleteRow(newRow.rowIndex - 1);
+                });
+            });
+            
+            // Add event listeners to existing remove buttons
+            document.querySelectorAll('.remove-row-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const table = row.parentNode;
+                    table.removeChild(row);
+                    
+                    if (table.id === 'coursesTable') {
+                        updateRowNumbers();
+                    }
+                });
+            });
+            
+            // Update row numbers in courses table
+            function updateRowNumbers() {
+                const table = document.getElementById('coursesTable').getElementsByTagName('tbody')[0];
+                for (let i = 0; i < table.rows.length; i++) {
+                    table.rows[i].cells[0].textContent = i + 1;
+                }
+            }
+            
+            // Generate RDF/Turtle
+            document.getElementById('generateRdfBtn').addEventListener('click', function() {
+                const title = document.getElementById('title').value;
+                const firstName = document.getElementById('firstName').value;
+                const lastName = document.getElementById('lastName').value;
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+                const submissionDate = document.getElementById('submissionDate').value;
+                const fullTime = document.getElementById('fullTime').checked;
+                const partTime = document.getElementById('partTime').checked;
+                const notes = document.getElementById('notes').value;
+                
+                // Get selected faculty
+                let faculty = '';
+                document.querySelectorAll('input[name="faculty"]:checked').forEach(checkbox => {
+                    faculty += checkbox.id + ' ';
+                });
+                faculty = faculty.trim();
+                
+                // Get preferred day
+                let preferredDay = '';
+                let preferredDayType = '';
+                if (document.getElementById('anyDay').checked) {
+                    preferredDay = 'any';
+                    preferredDayType = document.getElementById('anyDayD') ? 'D' : 'F';
+                } else {
+                    if (document.getElementById('monD').checked || document.getElementById('monF').checked) {
+                        preferredDay = 'Monday';
+                        preferredDayType = document.getElementById('monD').checked ? 'D' : 'F';
+                    } else if (document.getElementById('tueD').checked || document.getElementById('tueF').checked) {
+                        preferredDay = 'Tuesday';
+                        preferredDayType = document.getElementById('tueD').checked ? 'D' : 'F';
+                    } else if (document.getElementById('wedD').checked || document.getElementById('wedF').checked) {
+                        preferredDay = 'Wednesday';
+                        preferredDayType = document.getElementById('wedD').checked ? 'D' : 'F';
+                    } else if (document.getElementById('thuD').checked || document.getElementById('thuF').checked) {
+                        preferredDay = 'Thursday';
+                        preferredDayType = document.getElementById('thuD').checked ? 'D' : 'F';
+                    } else if (document.getElementById('friD').checked || document.getElementById('friF').checked) {
+                        preferredDay = 'Friday';
+                        preferredDayType = document.getElementById('friD').checked ? 'D' : 'F';
+                    }
+                }
+                
+                // Get courses
+                let courses = [];
+                const courseRows = document.getElementById('coursesTable').getElementsByTagName('tbody')[0].rows;
+                for (let i = 0; i < courseRows.length; i++) {
+                    const cells = courseRows[i].cells;
+                    courses.push({
+                        number: cells[0].textContent,
+                        fak: cells[1].querySelector('input').value,
+                        stg: cells[2].querySelector('input').value,
+                        fs: cells[3].querySelector('input').value,
+                        groups: cells[4].querySelector('input').value,
+                        moduleCode: cells[5].querySelector('input').value,
+                        moduleName: cells[6].querySelector('input').value,
+                        v: cells[7].querySelectorAll('input')[0].value,
+                        s: cells[7].querySelectorAll('input')[1].value,
+                        p: cells[7].querySelectorAll('input')[2].value,
+                        digital: cells[8].querySelector('select').value,
+                        note: cells[9].querySelector('input').value
+                    });
+                }
+                
+                // Get time restrictions
+                let timeRestrictions = [];
+                const restrictionRows = document.getElementById('timeRestrictionsTable').getElementsByTagName('tbody')[0].rows;
+                for (let i = 0; i < restrictionRows.length; i++) {
+                    const cells = restrictionRows[i].cells;
+                    timeRestrictions.push({
+                        weeks: cells[0].querySelector('input').value,
+                        days: cells[1].querySelector('input').value,
+                        time: cells[2].querySelector('input').value
+                    });
+                }
+                
+                // Generate RDF/Turtle
+                let rdf = `@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix htwk: <http://htwk-leipzig.de/ontology#> .
+@prefix person: <http://htwk-leipzig.de/person/> .
+@prefix course: <http://htwk-leipzig.de/course/> .
+@prefix time: <http://htwk-leipzig.de/time/> .
+
+person:${firstName}_${lastName} a htwk:Professor ;
+    htwk:title "${title}" ;
+    htwk:firstName "${firstName}" ;
+    htwk:lastName "${lastName}" ;
+    htwk:faculty htwk:${faculty || 'FDIT'} ;
+    htwk:employmentStatus htwk:${fullTime ? 'FullTime' : 'PartTime'} ;
+    htwk:email "${email}" ;
+    htwk:phoneExtension "${phone}" ;
+    htwk:submissionDeadline "${submissionDate}"^^xsd:date ;
+    htwk:notes "${notes.replace(/"/g, '\\"')}" ;\n`;
+                
+                if (preferredDay) {
+                    rdf += `    htwk:preferredDay htwk:${preferredDay} ;
+    htwk:preferredDayType htwk:${preferredDayType === 'D' ? 'TeachingDay' : 'ResearchDay'} ;\n`;
+                }
+                
+                // Add courses
+                courses.forEach(course => {
+                    rdf += `    htwk:teachingBlock [
+        a htwk:TeachingBlock ;
+        htwk:blockNumber "${course.number}" ;
+        htwk:facultyCode "${course.fak}" ;
+        htwk:degreeProgram "${course.stg}" ;
+        htwk:semester "${course.fs}" ;
+        htwk:groups "${course.groups}" ;
+        htwk:moduleCode "${course.moduleCode}" ;
+        htwk:moduleName "${course.moduleName.replace(/"/g, '\\"')}" ;
+        htwk:lectureHours ${course.v} ;
+        htwk:seminarHours ${course.s} ;
+        htwk:practicalHours ${course.p} ;
+        htwk:hasDigitalComponent ${course.digital === 'ja' ? 'true' : 'false'} ;
+        htwk:note "${course.note.replace(/"/g, '\\"')}"
+    ],\n`;
+                });
+                
+                // Remove trailing comma and add space
+                rdf = rdf.substring(0, rdf.lastIndexOf(',')) + ' ;\n';
+                
+                // Add time restrictions
+                timeRestrictions.forEach(restriction => {
+                    const timeParts = restriction.time.split(' ');
+                    const restrictionType = timeParts[0] === 'Bis' ? 'NotAvailableBefore' : 'NotAvailableAfter';
+                    const time = timeParts[1];
+                    
+                    rdf += `    htwk:timeRestriction [
+        a htwk:TimeRestriction ;
+        htwk:weekType htwk:${restriction.weeks === 'aw' ? 'AllWeeks' : restriction.weeks === 'gw' ? 'EvenWeeks' : 'OddWeeks'} ;
+        htwk:dayOfWeek ${restriction.days === 'Mo-Fr' ? '(htwk:Monday htwk:Tuesday htwk:Wednesday htwk:Thursday htwk:Friday)' : `htwk:${restriction.days}`} ;
+        htwk:restrictionType htwk:${restrictionType} ;
+        htwk:time "${time}"^^xsd:time
+    ],\n`;
+                });
+                
+                // Remove trailing comma and add period
+                rdf = rdf.substring(0, rdf.lastIndexOf(',')) + ' .\n';
+                
+                // Add teaching guidelines
+                rdf += `
+htwk:TeachingGuidelines a htwk:Policy ;
+    htwk:digitalTeachingRequiresApproval true ;
+    htwk:maxDigitalPercentage 50 ;
+    htwk:requiresTeachingConcept true ;
+    htwk:note "Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen. Für die Genehmigung und Anrechnung auf das Lehrdeputat sind Mindeststandards zu beachten." .`;
+                
+                document.getElementById('rdfOutput').value = rdf;
+            });
+            
+            // Generate PDF
+            document.getElementById('generatePdfBtn').addEventListener('click', function() {
+                const doc = new jsPDF();
+                
+                // Add HTWK logo and header
+                doc.setFontSize(12);
+                doc.text('HTWK Leipzig', 14, 15);
+                doc.setFontSize(16);
+                doc.text('Dozentenblatt', 80, 15);
+                doc.setFontSize(12);
+                doc.text('Sommersemester 2024', 160, 15);
+                doc.setFontSize(10);
+                doc.text('DS', 14, 22);
+                doc.text('Präsenzplanung (ggf. mit digitalen Anteilen)', 25, 22);
+                
+                // Add general information
+                doc.setFontSize(12);
+                doc.text('Jeder Lehrende füllt bitte nur ein Dozentenblatt aus!', 14, 30);
+                
+                // Add professor information
+                const title = document.getElementById('title').value;
+                const firstName = document.getElementById('firstName').value;
+                const lastName = document.getElementById('lastName').value;
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+                const fullTime = document.getElementById('fullTime').checked;
+                
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text(title, 14, 40);
+                doc.text(firstName, 50, 40);
+                doc.text(lastName, 80, 40);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Titel', 14, 45);
+                doc.text('Vorname', 50, 45);
+                doc.text('Name', 80, 45);
+                
+                // Faculty
+                let faculty = '';
+                document.querySelectorAll('input[name="faculty"]:checked').forEach(checkbox => {
+                    faculty += checkbox.id + ' ';
+                });
+                faculty = faculty.trim();
+                
+                doc.text('Fakultät/Bereich:', 14, 55);
+                doc.text(faculty, 50, 55);
+                
+                // Employment status
+                doc.text('Arbeitszeit (Pflichtangabe, außer Gast)', 14, 60);
+                doc.text(fullTime ? '☒ Vollzeit' : '☐ Vollzeit', 70, 60);
+                doc.text(fullTime ? '☐ Teilzeit' : '☒ Teilzeit', 100, 60);
+                
+                // Contact information
+                doc.text('E-Mailadresse (Pflichtangabe)', 14, 65);
+                doc.text(email, 70, 65);
+                
+                if (phone) {
+                    doc.text('Telefonisch erreichbar unter (optional)', 14, 70);
+                    doc.text(phone, 70, 70);
+                }
+                
+                // Submission date
+                const submissionDate = document.getElementById('submissionDate').value;
+                const formattedDate = submissionDate ? new Date(submissionDate).toLocaleDateString('de-DE') : '';
+                doc.text('Abgabetermin an DS:', 14, 75);
+                doc.text(formattedDate, 50, 75);
+                
+                // Courses table
+                doc.setFontSize(12);
+                doc.text('Bitte geben Sie in der Tabelle Ihre Einsätze (auch Bedienfunktionen) an!', 14, 85);
+                doc.text('Durchzuführende Lehrveranstaltungen', 14, 90);
+                
+                // Create courses table
+                const courseRows = document.getElementById('coursesTable').getElementsByTagName('tbody')[0].rows;
+                const coursesData = [];
+                
+                // Add header
+                coursesData.push([
+                    'lfd. Nr.',
+                    'Fak',
+                    'Stg.',
+                    'FS',
+                    'Gruppen',
+                    'Modulnr./ LE',
+                    'Modulname (Kürzel)',
+                    'Reale SWS (Präsenz)',
+                    'Digital',
+                    'Bemerkung'
+                ]);
+                
+                // Add course data
+                for (let i = 0; i < courseRows.length; i++) {
+                    const cells = courseRows[i].cells;
+                    coursesData.push([
+                        cells[0].textContent,
+                        cells[1].querySelector('input').value,
+                        cells[2].querySelector('input').value,
+                        cells[3].querySelector('input').value,
+                        cells[4].querySelector('input').value,
+                        cells[5].querySelector('input').value,
+                        cells[6].querySelector('input').value,
+                        `V:${cells[7].querySelectorAll('input')[0].value} S:${cells[7].querySelectorAll('input')[1].value} P:${cells[7].querySelectorAll('input')[2].value}`,
+                        cells[8].querySelector('select').value,
+                        cells[9].querySelector('input').value
+                    ]);
+                }
+                
+                // Auto-table for courses
+                doc.autoTable({
+                    startY: 95,
+                    head: [coursesData[0]],
+                    body: coursesData.slice(1),
+                    margin: { left: 14 },
+                    styles: { fontSize: 8 },
+                    columnStyles: {
+                        0: { cellWidth: 10 },
+                        1: { cellWidth: 10 },
+                        2: { cellWidth: 15 },
+                        3: { cellWidth: 8 },
+                        4: { cellWidth: 25 },
+                        5: { cellWidth: 15 },
+                        6: { cellWidth: 25 },
+                        7: { cellWidth: 25 },
+                        8: { cellWidth: 15 },
+                        9: { cellWidth: 25 }
+                    }
+                });
+                
+                // Add notes about SWS
+                doc.setFontSize(10);
+                doc.text('Reale SWS = tatsächlich zu realisierende SWS', 14, doc.lastAutoTable.finalY + 10);
+                doc.text('Beispiel: 2 SWS Seminar für 5 SG BIB einzeln durchgeführt ergibt 10 zu realisierende SWS', 14, doc.lastAutoTable.finalY + 15);
+                doc.text('oder', 14, doc.lastAutoTable.finalY + 20);
+                doc.text('2 SWS Vorlesung für 5 SG BIB, in 2 Blöcken mit jeweils 3 bzw. 2 SG durchgeführt,', 14, doc.lastAutoTable.finalY + 25);
+                doc.text('ergibt 4 zu realisierende SWS', 14, doc.lastAutoTable.finalY + 30);
+                doc.text('Zu jedem aufgeführten Modul/Teilmodul muss ein Zuarbeitsbogen ausgefüllt werden.', 14, doc.lastAutoTable.finalY + 35);
+                doc.text('Mehrere an einem Teilmodul beteiligte Dozenten füllen bitte einen gemeinsamen Zuarbeitsbogen aus!', 14, doc.lastAutoTable.finalY + 40);
+                
+                // Add new page for time restrictions
+                doc.addPage();
+                
+                // Teaching forms
+                doc.setFontSize(12);
+                doc.text('Lehrformen: Präsenz (mit digitalen Anteilen, wenn didaktisch vorteilhaft)', 14, 20);
+                doc.setFontSize(10);
+                doc.text('- Regelfall: Präsenz (es wird empfohlen, bei Bedarf eine virtuelle Teilnahme zu ermöglichen (hybride LV))', 14, 25);
+                doc.text('- Digital synchron (Wegezeiten für Studierende beachten)', 14, 30);
+                doc.text('- Digital asynchron', 14, 35);
+                doc.text('Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen.', 14, 40);
+                doc.text('Digitale Lehre steht unter dem Genehmigungsvorbehalt des Dekans und bedarf der vorherigen Vorlage eines', 14, 45);
+                doc.text('Lehrkonzeptes.', 14, 50);
+                doc.text('Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen. Für die Genehmigung und Anrechnung', 14, 55);
+                doc.text('auf das Lehrdeputat sind Mindeststandards zu beachten (siehe Hinweise zu digitaler Lehre an der HTWK Leipzig,', 14, 60);
+                doc.text('Kapitel 4.1).', 14, 65);
+                doc.text('Ferner steht jedwede digitale Lehre unter dem Ermöglichungsvorbehalt der Stunden- und Raumplanung.', 14, 70);
+                
+                // Time restrictions
+                doc.setFontSize(12);
+                doc.text('Notwendige regelmäßige Sperrzeiten für interne Dozenten sind:', 14, 80);
+                
+                // Create time restrictions table
+                const restrictionRows = document.getElementById('timeRestrictionsTable').getElementsByTagName('tbody')[0].rows;
+                const restrictionsData = [];
+                
+                // Add header
+                restrictionsData.push([
+                    'Wochen aw/gw/uw',
+                    'Wochentag Mo/Di/Mi/Do/Fr',
+                    'Uhrzeit Bis/Ab'
+                ]);
+                
+                // Add restriction data
+                for (let i = 0; i < restrictionRows.length; i++) {
+                    const cells = restrictionRows[i].cells;
+                    restrictionsData.push([
+                        cells[0].querySelector('input').value,
+                        cells[1].querySelector('input').value,
+                        cells[2].querySelector('input').value
+                    ]);
+                }
+                
+                // Auto-table for time restrictions
+                doc.autoTable({
+                    startY: 85,
+                    head: [restrictionsData[0]],
+                    body: restrictionsData.slice(1),
+                    margin: { left: 14 },
+                    styles: { fontSize: 10 }
+                });
+                
+                // Preferred day
+                if (fullTime) {
+                    doc.text('Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)', 14, doc.lastAutoTable.finalY + 10);
+                    
+                    let preferredDay = '';
+                    let preferredDayType = '';
+                    if (document.getElementById('anyDay').checked) {
+                        preferredDay = 'Tag ist egal';
+                    } else {
+                        if (document.getElementById('monD').checked || document.getElementById('monF').checked) {
+                            preferredDay = 'Montag';
+                            preferredDayType = document.getElementById('monD').checked ? 'D' : 'F';
+                        } else if (document.getElementById('tueD').checked || document.getElementById('tueF').checked) {
+                            preferredDay = 'Dienstag';
+                            preferredDayType = document.getElementById('tueD').checked ? 'D' : 'F';
+                        } else if (document.getElementById('wedD').checked || document.getElementById('wedF').checked) {
+                            preferredDay = 'Mittwoch';
+                            preferredDayType = document.getElementById('wedD').checked ? 'D' : 'F';
+                        } else if (document.getElementById('thuD').checked || document.getElementById('thuF').checked) {
+                            preferredDay = 'Donnerstag';
+                            preferredDayType = document.getElementById('thuD').checked ? 'D' : 'F';
+                        } else if (document.getElementById('friD').checked || document.getElementById('friF').checked) {
+                            preferredDay = 'Freitag';
+                            preferredDayType = document.getElementById('friD').checked ? 'D' : 'F';
+                        }
+                    }
+                    
+                    if (preferredDay) {
+                        const preferredDayData = [
+                            ['Tag ist egal', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'],
+                            [
+                                document.getElementById('anyDay').checked ? '☒' : '☐',
+                                (document.getElementById('monD').checked ? '☒ D' : '☐ D') + ' ' + (document.getElementById('monF').checked ? '☒ F' : '☐ F'),
+                                (document.getElementById('tueD').checked ? '☒ D' : '☐ D') + ' ' + (document.getElementById('tueF').checked ? '☒ F' : '☐ F'),
+                                (document.getElementById('wedD').checked ? '☒ D' : '☐ D') + ' ' + (document.getElementById('wedF').checked ? '☒ F' : '☐ F'),
+                                (document.getElementById('thuD').checked ? '☒ D' : '☐ D') + ' ' + (document.getElementById('thuF').checked ? '☒ F' : '☐ F'),
+                                (document.getElementById('friD').checked ? '☒ D' : '☐ D') + ' ' + (document.getElementById('friF').checked ? '☒ F' : '☐ F')
+                            ]
+                        ];
+                        
+                        doc.autoTable({
+                            startY: doc.lastAutoTable.finalY + 15,
+                            head: [preferredDayData[0]],
+                            body: [preferredDayData[1]],
+                            margin: { left: 14 },
+                            styles: { fontSize: 10 }
+                        });
+                    }
+                }
+                
+                // Add notes
+                const notes = document.getElementById('notes').value;
+                if (notes) {
+                    doc.setFontSize(12);
+                    doc.text('Wichtige Hinweise zur Semesterplanung:', 14, doc.lastAutoTable.finalY + 20);
+                    doc.setFontSize(10);
+                    const splitNotes = doc.splitTextToSize(notes, 180);
+                    doc.text(splitNotes, 14, doc.lastAutoTable.finalY + 25);
+                }
+                
+                // Add signature fields
+                doc.setFontSize(12);
+                doc.text('Datum, Unterschrift', 14, doc.lastAutoTable.finalY + 40);
+                doc.text('Verantwortliche/r Dozent/in', 14, doc.lastAutoTable.finalY + 45);
+                
+                doc.text('Datum, Unterschrift', 120, doc.lastAutoTable.finalY + 40);
+                doc.text('Dekan/in der Fakultät', 120, doc.lastAutoTable.finalY + 45);
+                
+                // Save the PDF
+                doc.save(`Dozentenblatt_${lastName}_SoSe2024.pdf`);
+            });
+            
+            // Reset form
+            document.getElementById('resetFormBtn').addEventListener('click', function() {
+                if (confirm('Möchten Sie das Formular wirklich zurücksetzen? Alle eingegebenen Daten gehen verloren.')) {
+                    document.querySelector('form').reset();
+                    const courseTable = document.getElementById('coursesTable').getElementsByTagName('tbody')[0];
+                    while (courseTable.rows.length > 0) {
+                        courseTable.deleteRow(0);
+                    }
+                    const restrictionTable = document.getElementById('timeRestrictionsTable').getElementsByTagName('tbody')[0];
+                    while (restrictionTable.rows.length > 0) {
+                        restrictionTable.deleteRow(0);
+                    }
+                    document.getElementById('rdfOutput').value = '';
+                }
+            });
+            
+            // Make sure only one employment status is selected
+            document.getElementById('fullTime').addEventListener('change', function() {
+                if (this.checked) {
+                    document.getElementById('partTime').checked = false;
+                }
+            });
+            
+            document.getElementById('partTime').addEventListener('change', function() {
+                if (this.checked) {
+                    document.getElementById('fullTime').checked = false;
+                }
+            });
+            
+            // Make sure only one preferred day is selected
+            const dayCheckboxes = [
+                'anyDay', 'monD', 'monF', 'tueD', 'tueF', 'wedD', 'wedF', 'thuD', 'thuF', 'friD', 'friF'
+            ];
+            
+            dayCheckboxes.forEach(id => {
+                document.getElementById(id)?.addEventListener('change', function() {
+                    if (this.checked) {
+                        // Uncheck all other day checkboxes in the same group
+                        const group = this.id.includes('D') ? 'D' : this.id.includes('F') ? 'F' : 'any';
+                        
+                        dayCheckboxes.forEach(otherId => {
+                            if (otherId !== id) {
+                                if (group === 'any' && otherId !== 'anyDay') {
+                                    // If "any day" is checked, uncheck all specific days
+                                    document.getElementById(otherId).checked = false;
+                                } else if (group !== 'any' && otherId === 'anyDay') {
+                                    // If a specific day is checked, uncheck "any day"
+                                    document.getElementById(otherId).checked = false;
+                                } else if (otherId.includes(group)) {
+                                    // Uncheck other options in the same group (D/F)
+                                    document.getElementById(otherId).checked = false;
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

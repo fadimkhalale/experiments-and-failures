@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTWK Formulare PDF Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #003366;
+            text-align: center;
+        }
+        .form-selector {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .form-selector label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        select, button {
+            padding: 8px 12px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #003366;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            padding: 10px 15px;
+        }
+        button:hover {
+            background-color: #004080;
+        }
+        .preview-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-top: 20px;
+            background-color: white;
+        }
+        .hidden {
+            display: none;
+        }
+        .form-title {
+            color: #003366;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 5px;
+            margin-top: 0;
+        }
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .htwk-header {
+            font-weight: bold;
+            color: #003366;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .signature-line {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature-box {
+            width: 200px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+        }
+        .checkbox-container {
+            margin: 15px 0;
+        }
+        .checkbox-label {
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HTWK Formulare PDF Generator</h1>
+        
+        <div class="form-selector">
+            <label for="form-type">Formular auswählen:</label>
+            <select id="form-type">
+                <option value="zuarbeit">Zuarbeitsblatt</option>
+                <option value="dozenten">Dozentenblatt</option>
+            </select>
+            <button id="generate-pdf">PDF generieren</button>
+        </div>
+        
+        <div id="zuarbeit-form" class="preview-container">
+            <div class="header-info">
+                <div>Abgabetermin bei DS: <span id="zuarbeit-deadline">20.11.2023</span></div>
+                <div class="htwk-header">HTWK Leipzig</div>
+            </div>
+            
+            <h2 class="form-title">Zuarbeit</h2>
+            <h3>Lehrveranstaltungsplanung</h3>
+            <h3>Sommersemester <span id="zuarbeit-semester">2024</span></h3>
+            <p>Präsenzsemester</p>
+            <p>Sommersemester <span id="zuarbeit-year">2022</span>: Planungswochen 14-28 = Kalenderwochen 14-28</p>
+            
+            <table id="zuarbeit-module-info">
+                <tr>
+                    <th>Fakultät</th>
+                    <th>Studiengang</th>
+                    <th>Fachsemester</th>
+                    <th>Gruppen</th>
+                </tr>
+                <tr>
+                    <td id="zuarbeit-faculty">IM(I)</td>
+                    <td id="zuarbeit-program">INB+MIB</td>
+                    <td id="zuarbeit-semester-num">4.</td>
+                    <td id="zuarbeit-groups">22INB-1+2+3 + 22MIB-1+2</td>
+                </tr>
+            </table>
+            
+            <h4 id="zuarbeit-module-name">C249 Semantic Web</h4>
+            <p>Nummer und Bezeichnung des Moduls</p>
+            
+            <h4 id="zuarbeit-module-name2">C249 Semantic Web</h4>
+            <p>Nummer und Bezeichnung der Lehrveranstaltung/des Teilmoduls</p>
+            
+            <table id="zuarbeit-sws">
+                <tr>
+                    <th>Gesamt SWS (bezogen auf einen Beispiel - Studenten):</th>
+                    <th>4</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th>Vorlesung</th>
+                    <th>Seminar</th>
+                    <th>Praktikum</th>
+                </tr>
+                <tr>
+                    <td>davon SWS</td>
+                    <td id="zuarbeit-vorlesung">2</td>
+                    <td id="zuarbeit-seminar">2</td>
+                    <td id="zuarbeit-praktikum">0</td>
+                </tr>
+                <tr>
+                    <td>Raumanforderung</td>
+                    <td id="zuarbeit-room-vl">Gu, Li, Tr</td>
+                    <td id="zuarbeit-room-sem">Z423,Z430</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Technikanforderung (Campus – Bereich)</td>
+                    <td id="zuarbeit-tech">Beamer/WLAN</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+            
+            <p><strong>Hinweis:</strong> Die Buchung von Technik für den Campusbereich ist nur eine Voranmeldung. Die Nutzungsmodalitäten sind vom Lehrenden mit DT abzusprechen.</p>
+            <p><strong>Hinweis:</strong> 1 SWS = 1 WS (Wochenstunde: 45 min) in jeder Woche des Semesters; geplant werden nur Einheiten: 1 Einheit = 2 WS = 90 min</p>
+            
+            <table id="zuarbeit-lecturers">
+                <tr>
+                    <th colspan="3">Lesende:</th>
+                </tr>
+                <tr>
+                    <th>Fakultät – Bereich / Titel, Name</th>
+                    <th>Seminargruppe</th>
+                    <th>Erläuterung</th>
+                </tr>
+                <tr>
+                    <td id="zuarbeit-lecturer-name">FIM(I)/Prof. Thomas Riechert</td>
+                    <td id="zuarbeit-lecturer-groups">22INB-1+2 + 22MIB-1+2</td>
+                    <td id="zuarbeit-lecturer-desc">Vorlesung gemeinsam</td>
+                </tr>
+            </table>
+            
+            <p>Geben Sie bitte an, welche Gruppen gemeinsam an einer Vorlesung teilnehmen oder ob für jede Gruppe einzeln gelesen wird. Bei mehreren Lesenden bitte die Art der Teilung erläutern:</p>
+            <p>z. B. Inhaltliche Teilung - die Lesenden übernehmen nacheinander ein bestimmtes Gebiet des Lehrstoffes ordnen Sie bitte die entsprechenden Kalenderwochen zu</p>
+            <p>quantitative Teilung - jeder Lesende übernimmt eine oder mehrere Seminargruppen, es kann auch parallel geplant werden.</p>
+            
+            <table id="zuarbeit-seminar-leaders">
+                <tr>
+                    <th colspan="3">Seminarleiter:</th>
+                </tr>
+                <tr>
+                    <th>Fakultät – Bereich / Titel, Name</th>
+                    <th>Seminargruppe</th>
+                    <th>Erläuterung</th>
+                </tr>
+                <tr>
+                    <td id="zuarbeit-seminar-leader1">FIM(I)/ Prof. Thomas Riechert</td>
+                    <td id="zuarbeit-seminar-groups1">22INB-1+2 +3</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td id="zuarbeit-seminar-leader2">FIM(I)/ Prof. Thomas Riechert</td>
+                    <td id="zuarbeit-seminar-groups2">22MIB-1+2</td>
+                    <td></td>
+                </tr>
+            </table>
+            
+            <p>Bitte geben Sie an, ob die Seminare mit den einzelnen Seminargruppen, in mehreren Gruppen gemeinsam als Hörsaalseminar oder in anderen Varianten durchgeführt werden.</p>
+            
+            <h4>Praktikumsverantwortliche:</h4>
+            <table id="zuarbeit-praktikum-leaders">
+                <tr>
+                    <th>Fakultät – Bereich / Titel, Name</th>
+                    <th>Seminargruppe</th>
+                    <th>Erläuterung</th>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+            
+            <p>Bitte geben Sie die Art der Praktikumsdurchführung an, eventuelle Teilnehmerzahlen je Veranstaltung, Staffelung der Praktika usw.</p>
+            
+            <h4>Wünsche zur Planung dieser Lehrveranstaltung in den umseitig angegebenen Gruppen:</h4>
+            <p>Weichen die angegebenen Lehrveranstaltungen vom allgemeinen Rhythmus ab, dann geben Sie unbedingt die konkreten <strong>Kalenderwochen</strong> zu den Veranstaltungen bzw. Dozenten an! Die 28. Planungswoche ist für Blockveranstaltungen, Prüfungsvorbereitung und Lehrveranstaltungen vorgesehen.</p>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="zuarbeit-option1" checked>
+                <label class="checkbox-label" for="zuarbeit-option1">gleichmäßige Verteilung von Vorlesungen und Seminaren auf gerade und ungerade Wochen</label>
+            </div>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="zuarbeit-option2">
+                <label class="checkbox-label" for="zuarbeit-option2">Vorlesungen in der einen und Seminare in der anderen Woche</label>
+            </div>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="zuarbeit-option3">
+                <label class="checkbox-label" for="zuarbeit-option3">Blockplanung (2 Einheiten hintereinander) von Vorlesungen, Seminaren oder Praktika einer Seminargruppe</label>
+            </div>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="zuarbeit-option4" checked>
+                <label class="checkbox-label" for="zuarbeit-option4">keine Blockplanung in einer Seminargruppe</label>
+            </div>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="zuarbeit-option5">
+                <label class="checkbox-label" for="zuarbeit-option5">Vorlesung zwingend vor Seminar</label>
+            </div>
+            
+            <div class="signature-line">
+                <div class="signature-box">
+                    <p>Datum, Unterschrift</p>
+                    <p>Verantwortliche/r Professor/in</p>
+                </div>
+                <div class="signature-box">
+                    <p>Datum, Unterschrift</p>
+                    <p>Dekan/in der Fakultät</p>
+                </div>
+            </div>
+            
+            <p>Bei Dienstleistung zusätzlich von der bedienenden Fakultät:</p>
+            
+            <div class="signature-box">
+                <p>Datum, Unterschrift</p>
+                <p>Dekan/in der Fakultät</p>
+            </div>
+        </div>
+        
+        <div id="dozenten-form" class="preview-container hidden">
+            <div class="header-info">
+                <div>Abgabetermin an DS: <span id="dozenten-deadline">20.11.2023</span></div>
+                <div class="htwk-header">HTWK Leipzig</div>
+            </div>
+            
+            <div class="header-info">
+                <div>Eingegangen bei DS:</div>
+                <div class="htwk-header">Dozentenblatt</div>
+                <div>Sommersemester <span id="dozenten-semester">2024</span></div>
+            </div>
+            
+            <div class="header-info">
+                <div>DS</div>
+                <div>Präsenzplanung</div>
+                <div>(ggf. mit digitalen Anteilen)</div>
+            </div>
+            
+            <p>Jeder Lehrende füllt bitte nur ein Dozentenblatt aus!</p>
+            
+            <h3 id="dozenten-name">Prof. Dr. rer. nat. Thomas Riechert</h3>
+            <p>Titel Vorname Name</p>
+            
+            <p>Fakultät/Bereich: 
+                <span id="dozenten-faculty">□ □ □ ☒ □ □ □ □ □</span>
+                <span>FAS FB FDIT FIM FING FWW HSZ MNZ Gast HonProf</span>
+            </p>
+            
+            <p>Arbeitszeit (Pflichtangabe, außer Gast) 
+                <span id="dozenten-worktime">☒ Vollzeit □ Teilzeit</span>
+            </p>
+            
+            <p>E-Mailadresse (Pflichtangabe) <span id="dozenten-email">thomas.riechert@htwk-leipzig.de</span></p>
+            <p>Telefonisch erreichbar unter (optional) <span id="dozenten-phone">6413</span></p>
+            
+            <p><strong>Bitte geben Sie in der Tabelle Ihre Einsätze (auch Bedienfunktionen) an!</strong></p>
+            
+            <h4>Durchzuführende Lehrveranstaltungen</h4>
+            <table id="dozenten-courses">
+                <tr>
+                    <th>lfd. Nr.</th>
+                    <th>Fak</th>
+                    <th>Stg.</th>
+                    <th>FS</th>
+                    <th>Gruppen</th>
+                    <th>Modulnr./ LE</th>
+                    <th>Modulname (Kürzel)</th>
+                    <th>Reale SWS (Präsenz)</th>
+                    <th></th>
+                    <th>Digital</th>
+                    <th>Bemerkung</th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th>V</th>
+                    <th>S</th>
+                    <th>P</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <td id="dozenten-course1-num">1</td>
+                    <td id="dozenten-course1-fak">IM(I)</td>
+                    <td id="dozenten-course1-stg">MIB</td>
+                    <td id="dozenten-course1-fs">4.</td>
+                    <td id="dozenten-course1-groups">22MIB-1+2 22MIB-BIN</td>
+                    <td id="dozenten-course1-module">C902</td>
+                    <td id="dozenten-course1-name">Wissenschafts- kommunikation</td>
+                    <td id="dozenten-course1-v">1</td>
+                    <td id="dozenten-course1-s">2</td>
+                    <td id="dozenten-course1-p">0</td>
+                    <td id="dozenten-course1-digital">nein</td>
+                    <td id="dozenten-course1-notes">3 Seminargruppen 22MIB-2 F.Stolze</td>
+                </tr>
+                <tr>
+                    <td id="dozenten-course2-num">2</td>
+                    <td id="dozenten-course2-fak">IM(I)</td>
+                    <td id="dozenten-course2-stg">INB+ MIB</td>
+                    <td id="dozenten-course2-fs">4.</td>
+                    <td id="dozenten-course2-groups">22INB- 1+2+3 22MIB-1+2 22MIB-BIN</td>
+                    <td id="dozenten-course2-module">C249</td>
+                    <td id="dozenten-course2-name">Semantic Web</td>
+                    <td id="dozenten-course2-v">2</td>
+                    <td id="dozenten-course2-s">4</td>
+                    <td id="dozenten-course2-p">0</td>
+                    <td id="dozenten-course2-digital">nein</td>
+                    <td id="dozenten-course2-notes">2 Gruppen</td>
+                </tr>
+                <tr>
+                    <td id="dozenten-course3-num">3</td>
+                    <td id="dozenten-course3-fak">IM(I)</td>
+                    <td id="dozenten-course3-stg">INB+ MIB</td>
+                    <td id="dozenten-course3-fs">4.</td>
+                    <td id="dozenten-course3-groups">22INB- 1+2+3 22MIB-1+2 22MIB-BIN</td>
+                    <td id="dozenten-course3-module">C977</td>
+                    <td id="dozenten-course3-name">E-Business</td>
+                    <td id="dozenten-course3-v">2</td>
+                    <td id="dozenten-course3-s">4</td>
+                    <td id="dozenten-course3-p">0</td>
+                    <td id="dozenten-course3-digital">nein</td>
+                    <td id="dozenten-course3-notes">2 Gruppen</td>
+                </tr>
+            </table>
+            
+            <p>Reale SWS = tatsächlich zu realisierende SWS</p>
+            <p>Beispiel: 2 SWS Seminar für 5 SG BIB einzeln durchgeführt ergibt 10 zu realisierende SWS</p>
+            <p>oder</p>
+            <p>2 SWS Vorlesung für 5 SG BIB, in 2 Blöcken mit jeweils 3 bzw. 2 SG durchgeführt, ergibt 4 zu realisierende SWS</p>
+            <p>Zu jedem aufgeführten Modul/Teilmodul muss ein Zuarbeitsbogen ausgefüllt werden. <strong>Mehrere an einem Teilmodul beteiligte Dozenten füllen bitte einen gemeinsamen Zuarbeitsbogen aus!</strong></p>
+            
+            <h4>Hinweise zum Stundenplan:</h4>
+            <ul>
+                <li>Wahlobligatorische Veranstaltungen werden in der ersten Planungsrunde geplant, wenn die Zahl der teilnehmenden Studenten vorliegt und größer als 9 ist. Fakultative und restliche wahlobligatorische Veranstaltungen werden nach Fertigstellung der Pläne in Absprache mit der Fakultät eingefügt.</li>
+                <li>Da Doppelplanung der Dozenten nicht möglich ist, ist es notwendig, die Lehrkraft zu benennen, die die Lehrveranstaltung wirklich durchführt (z.B. Seminarleiter, Praktikumsbetreuer).</li>
+            </ul>
+            
+            <h4>Lehrformen: Präsenz (mit digitalen Anteilen, wenn didaktisch vorteilhaft)</h4>
+            <ul>
+                <li>Regelfall: Präsenz (es wird empfohlen, bei Bedarf eine virtuelle Teilnahme zu ermöglichen (hybride LV))</li>
+                <li>Digital synchron (Wegezeiten für Studierende beachten)</li>
+                <li>Digital asynchron</li>
+            </ul>
+            
+            <p><strong>Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen.</strong></p>
+            <p>Digitale Lehre steht unter dem Genehmigungsvorbehalt des Dekans und bedarf der vorherigen Vorlage eines Lehrkonzeptes.</p>
+            <p>Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen. Für die Genehmigung und Anrechnung auf das Lehrdeputat sind Mindeststandards zu beachten (siehe Hinweise zu digitaler Lehre an der HTWK Leipzig, Kapitel 4.1).</p>
+            <p>Ferner steht jedwede digitale Lehre unter dem Ermöglichungsvorbehalt der Stunden- und Raumplanung.</p>
+            
+            <p>Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)</p>
+            <p>Die gewünschten Dozenten- und Forschungstage sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen. Nach Prüfung werden diese zentral an DS übermittelt.</p>
+            
+            <p>Notwendige Sperrzeiten sind: (nur bei Gästen und Teilzeit!)</p>
+            <p>Die notwendigen Sperrzeiten sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen. Nach Prüfung werden diese zentral an DS übermittelt.</p>
+            
+            <table id="dozenten-notes">
+                <tr>
+                    <th>Bei Bedarf vom Dozenten auszufüllen</th>
+                    <th>Nur vom Dekanat / Studienamt auszufüllen!</th>
+                </tr>
+                <tr>
+                    <td id="dozenten-notes-left">Wichtige Hinweise zur Semesterplanung: Keine Sperrzeiten!!!</td>
+                    <td id="dozenten-notes-right">Hinweise bei Rückgabe an den Dozenten:</td>
+                </tr>
+                <tr>
+                    <td>z.B.: kein Dozententag, dafür Gleichverteilung der LV</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+            
+            <h3>HTWK Leipzig</h3>
+            <h4>DS</h4>
+            <h3>Anlage 1 zum Dozentenblatt</h3>
+            <h4>Sommersemester <span id="dozenten-anlage-semester">2024</span></h4>
+            
+            <h3 id="dozenten-anlage-name">Prof. Dr. rer. nat. Thomas Riechert</h3>
+            <p>Titel Vorname Name</p>
+            
+            <h4>Regelmäßig mögliche Einsatzzeiten für externe Dozenten sind:</h4>
+            <table id="dozenten-external-times">
+                <tr>
+                    <th>Zeitangabe</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <th>Wochen aw/gw/uw</th>
+                    <th>Wochentag Mo/Di/Mi/Do/Fr</th>
+                    <th>Uhrzeit Ab/Bis</th>
+                </tr>
+            </table>
+            
+            <p>Anmerkung</p>
+            
+            <h4>Notwendige regelmäßige Sperrzeiten für interne Dozenten sind:</h4>
+            <table id="dozenten-blocked-times">
+                <tr>
+                    <th>Zeitangabe</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <th>Wochen aw/gw/uw</th>
+                    <th>Wochentag Mo/Di/Mi/Do/Fr</th>
+                    <th>Uhrzeit Bis/Ab</th>
+                </tr>
+                <tr>
+                    <td id="dozenten-blocked1-week">aw</td>
+                    <td id="dozenten-blocked1-day">Mo-Fr</td>
+                    <td id="dozenten-blocked1-time">Bis 8:00</td>
+                </tr>
+                <tr>
+                    <td id="dozenten-blocked2-week">aw</td>
+                    <td id="dozenten-blocked2-day">Mo-Fr</td>
+                    <td id="dozenten-blocked2-time">Ab 17:00</td>
+                </tr>
+            </table>
+            
+            <p>Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)</p>
+            <table id="dozenten-research-day">
+                <tr>
+                    <th>Tag ist egal</th>
+                    <th>Montag</th>
+                    <th>Dienstag</th>
+                    <th>Mittwoch</th>
+                    <th>Donnerstag</th>
+                    <th>Freitag</th>
+                </tr>
+                <tr>
+                    <td>□ D □ F aber nicht:</td>
+                    <td>□ D □ F</td>
+                    <td>□ D □ F</td>
+                    <td>□ D □ F</td>
+                    <td>☒ D □ F</td>
+                    <td>□ D □ F</td>
+                </tr>
+            </table>
+            
+            <p>Hinweis: D – Dozententag; F – Forschungstag → jeweils nur einmal auswählen!</p>
+            
+            <div class="signature-line">
+                <div class="signature-box">
+                    <p>Datum, Unterschrift</p>
+                    <p>Verantwortliche/r Dozent/in</p>
+                </div>
+                <div class="signature-box">
+                    <p>Datum, Unterschrift</p>
+                    <p>Dekan/in der Fakultät</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for the DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get form type selector and generate button
+            const formTypeSelect = document.getElementById('form-type');
+            const generateBtn = document.getElementById('generate-pdf');
+            const zuarbeitForm = document.getElementById('zuarbeit-form');
+            const dozentenForm = document.getElementById('dozenten-form');
+            
+            // Show the selected form and hide the other
+            formTypeSelect.addEventListener('change', function() {
+                if (this.value === 'zuarbeit') {
+                    zuarbeitForm.classList.remove('hidden');
+                    dozentenForm.classList.add('hidden');
+                } else {
+                    zuarbeitForm.classList.add('hidden');
+                    dozentenForm.classList.remove('hidden');
+                }
+            });
+            
+            // Generate PDF function
+            generateBtn.addEventListener('click', function() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                if (formTypeSelect.value === 'zuarbeit') {
+                    generateZuarbeitPDF(doc);
+                } else {
+                    generateDozentenPDF(doc);
+                }
+                
+                // Save the PDF
+                doc.save(formTypeSelect.value === 'zuarbeit' ? 'Zuarbeitsblatt.pdf' : 'Dozentenblatt.pdf');
+            });
+            
+            // Function to generate Zuarbeit PDF
+            function generateZuarbeitPDF(doc) {
+                // Set document properties
+                doc.setProperties({
+                    title: 'Zuarbeitsblatt',
+                    subject: 'Lehrveranstaltungsplanung',
+                    author: 'HTWK Leipzig',
+                    keywords: 'htwk, leipzig, zuarbeit, lehrveranstaltung',
+                    creator: 'HTWK Formular Generator'
+                });
+                
+                // Add content
+                doc.setFontSize(12);
+                doc.text(`Abgabetermin bei DS: ${document.getElementById('zuarbeit-deadline').textContent}`, 14, 20);
+                doc.text('HTWK Leipzig', 180, 20, { align: 'right' });
+                
+                doc.setFontSize(14);
+                doc.text('Zuarbeit', 105, 30, { align: 'center' });
+                
+                doc.setFontSize(12);
+                doc.text('Lehrveranstaltungsplanung', 105, 36, { align: 'center' });
+                doc.text(`Sommersemester ${document.getElementById('zuarbeit-semester').textContent}`, 105, 42, { align: 'center' });
+                doc.text('Präsenzsemester', 105, 48, { align: 'center' });
+                doc.text(`Sommersemester ${document.getElementById('zuarbeit-year').textContent}: Planungswochen 14-28 = Kalenderwochen 14-28`, 14, 54);
+                
+                // Add module info table
+                doc.autoTable({
+                    startY: 60,
+                    head: [['Fakultät', 'Studiengang', 'Fachsemester', 'Gruppen']],
+                    body: [
+                        [
+                            document.getElementById('zuarbeit-faculty').textContent,
+                            document.getElementById('zuarbeit-program').textContent,
+                            document.getElementById('zuarbeit-semester-num').textContent,
+                            document.getElementById('zuarbeit-groups').textContent
+                        ]
+                    ],
+                    margin: { top: 10 },
+                    styles: { fontSize: 10 }
+                });
+                
+                // Add module name
+                doc.setFontSize(12);
+                doc.text(document.getElementById('zuarbeit-module-name').textContent, 14, doc.autoTable.previous.finalY + 15);
+                doc.text('Nummer und Bezeichnung des Moduls', 14, doc.autoTable.previous.finalY + 21);
+                
+                doc.text(document.getElementById('zuarbeit-module-name2').textContent, 14, doc.autoTable.previous.finalY + 27);
+                doc.text('Nummer und Bezeichnung der Lehrveranstaltung/des Teilmoduls', 14, doc.autoTable.previous.finalY + 33);
+                
+                // Add SWS table
+                doc.autoTable({
+                    startY: doc.autoTable.previous.finalY + 40,
+                    head: [
+                        ['Gesamt SWS (bezogen auf einen Beispiel - Studenten):', '4', '', ''],
+                        ['', 'Vorlesung', 'Seminar', 'Praktikum']
+                    ],
+                    body: [
+                        [
+                            'davon SWS',
+                            document.getElementById('zuarbeit-vorlesung').textContent,
+                            document.getElementById('zuarbeit-seminar').textContent,
+                            document.getElementById('zuarbeit-praktikum').textContent
+                        ],
+                        [
+                            'Raumanforderung',
+                            document.getElementById('zuarbeit-room-vl').textContent,
+                            document.getElementById('zuarbeit-room-sem').textContent,
+                            ''
+                        ],
+                        [
+                            'Technikanforderung (Campus – Bereich)',
+                            document.getElementById('zuarbeit-tech').textContent,
+                            '',
+                            ''
+                        ]
+                    ],
+                    margin: { top: 10 },
+                    styles: { fontSize: 10 },
+                    headStyles: {
+                        0: { fontStyle: 'bold', halign: 'left' },
+                        1: { fontStyle: 'bold', halign: 'center' }
+                    }
+                });
+                
+                // Add notes
+                doc.setFontSize(10);
+                doc.text('Hinweis: Die Buchung von Technik für den Campusbereich ist nur eine Voranmeldung. Die Nutzungsmodalitäten', 14, doc.autoTable.previous.finalY + 10);
+                doc.text('sind vom Lehrenden mit DT abzusprechen.', 14, doc.autoTable.previous.finalY + 15);
+                
+                doc.text('Hinweis: 1 SWS = 1 WS (Wochenstunde: 45 min) in jeder Woche des Semesters; geplant werden nur Einheiten:', 14, doc.autoTable.previous.finalY + 25);
+                doc.text('1 Einheit = 2 WS = 90 min', 14, doc.autoTable.previous.finalY + 30);
+                
+                // Add lecturers table
+                doc.autoTable({
+                    startY: doc.autoTable.previous.finalY + 40,
+                    head: [['Fakultät – Bereich / Titel, Name', 'Seminargruppe', 'Erläuterung']],
+                    body: [
+                        [
+                            document.getElementById('zuarbeit-lecturer-name').textContent,
+                            document.getElementById('zuarbeit-lecturer-groups').textContent,
+                            document.getElementById('zuarbeit-lecturer-desc').textContent
+                        ]
+                    ],
+                    margin: { top: 10 },
+                    styles: { fontSize: 10 },
+                    headStyles: { fontStyle: 'bold' }
+                });
+                
+                // Add explanation text
+                doc.setFontSize(10);
+                doc.text('Geben Sie bitte an, welche Gruppen gemeinsam an einer Vorlesung teilnehmen oder ob für jede Gruppe einzeln gelesen wird.', 14, doc.autoTable.previous.finalY + 10);
+                doc.text('Bei mehreren Lesenden bitte die Art der Teilung erläutern:', 14, doc.autoTable.previous.finalY + 15);
+                doc.text('z. B. Inhaltliche Teilung - die Lesenden übernehmen nacheinander ein bestimmtes Gebiet des Lehrstoffes ordnen Sie bitte die', 14, doc.autoTable.previous.finalY + 20);
+                doc.text('entsprechenden Kalenderwochen zu', 14, doc.autoTable.previous.finalY + 25);
+                doc.text('quantitative Teilung - jeder Lesende übernimmt eine oder mehrere Seminargruppen, es kann auch parallel geplant werden.', 14, doc.autoTable.previous.finalY + 30);
+                
+                // Add seminar leaders table
+                doc.autoTable({
+                    startY: doc.autoTable.previous.finalY + 40,
+                    head: [['Fakultät – Bereich / Titel, Name', 'Seminargruppe', 'Erläuterung']],
+                    body: [
+                        [
+                            document.getElementById('zuarbeit-seminar-leader1').textContent,
+                            document.getElementById('zuarbeit-seminar-groups1').textContent,
+                            ''
+                        ],
+                        [
+                            document.getElementById('zuarbeit-seminar-leader2').textContent,
+                            document.getElementById('zuarbeit-seminar-groups2').textContent,
+                            ''
+                        ]
+                    ],
+                    margin: { top: 10 },
+                    styles: { fontSize: 10 },
+                    headStyles: { fontStyle: 'bold' }
+                });
+                
+                // Add seminar explanation
+                doc.setFontSize(10);
+                doc.text('Bitte geben Sie an, ob die Seminare mit den einzelnen Seminargruppen, in mehreren Gruppen gemeinsam als Hörsaalseminar', 14, doc.autoTable.previous.finalY + 10);
+                doc.text('oder in anderen Varianten durchgeführt werden.', 14, doc.autoTable.previous.finalY + 15);
+                
+                // Add praktikum leaders title
+                doc.setFontSize(12);
+                doc.text('Praktikumsverantwortliche:', 14, doc.autoTable.previous.finalY + 25);
+                
+                // Add empty praktikum leaders table
+                doc.autoTable({
+                    startY: doc.autoTable.previous.finalY + 30,
+                    head: [['Fakultät – Bereich / Titel, Name', 'Seminargruppe', 'Erläuterung']],
+                    body: [
+                        ['', '', ''],
+                        ['', '', ''],
+                        ['', '', '']
+                    ],
+                    margin: { top: 10 },
+                    styles: { fontSize: 10 },
+                    headStyles: { fontStyle: 'bold' }
+                });
+                
+                // Add praktikum explanation
+                doc.setFontSize(10);
+                doc.text('Bitte geben Sie die Art der Praktikumsdurchführung an, eventuelle Teilnehmerzahlen je Veranstaltung, Staffelung der Praktika usw.', 14, doc.autoTable.previous.finalY + 10);
+                
+                // Add planning wishes title
+                doc.setFontSize(12);
+                doc.text('Wünsche zur Planung dieser Lehrveranstaltung in den umseitig angegebenen Gruppen:', 14, doc.autoTable.previous.finalY + 20);
+                
+                // Add planning wishes text
+                doc.setFontSize(10);
+                doc.text('Weichen die angegebenen Lehrveranstaltungen vom allgemeinen Rhythmus ab, dann geben Sie unbedingt die konkreten', 14, doc.autoTable.previous.finalY + 30);
+                doc.text('Kalenderwochen zu den Veranstaltungen bzw. Dozenten an! Die 28. Planungswoche ist für Blockveranstaltungen,', 14, doc.autoTable.previous.finalY + 35);
+                doc.text('Prüfungsvorbereitung und Lehrveranstaltungen vorgesehen.', 14, doc.autoTable.previous.finalY + 40);
+                
+                // Add checkboxes
+                const checkboxOptions = [
+                    'gleichmäßige Verteilung von Vorlesungen und Seminaren auf gerade und ungerade Wochen',
+                    'Vorlesungen in der einen und Seminare in der anderen Woche',
+                    'Blockplanung (2 Einheiten hintereinander) von Vorlesungen, Seminaren oder Praktika einer Seminargruppe',
+                    'keine Blockplanung in einer Seminargruppe',
+                    'Vorlesung zwingend vor Seminar'
+                ];
+                
+                let checkboxY = doc.autoTable.previous.finalY + 50;
+                
+                checkboxOptions.forEach((option, index) => {
+                    const isChecked = document.getElementById(`zuarbeit-option${index+1}`).checked;
+                    doc.text(isChecked ? '☒' : '□', 14, checkboxY);
+                    doc.text(option, 22, checkboxY);
+                    checkboxY += 7;
+                });
+                
+                // Add signature lines
+                doc.setFontSize(10);
+                doc.line(14, checkboxY + 20, 60, checkboxY + 20);
+                doc.line(150, checkboxY + 20, 196, checkboxY + 20);
+                
+                doc.text('Datum, Unterschrift', 14, checkboxY + 25);
+                doc.text('Verantwortliche/r Professor/in', 14, checkboxY + 30);
+                
+                doc.text('Datum, Unterschrift', 150, checkboxY + 25);
+                doc.text('Dekan/in der Fakultät', 150, checkboxY + 30);
+                
+                // Add additional signature for Dienstleistung
+                doc.text('Bei Dienstleistung zusätzlich von der bedienenden Fakultät:', 14, checkboxY + 45);
+                
+                doc.line(14, checkboxY + 55, 60, checkboxY + 55);
+                doc.text('Datum, Unterschrift', 14, checkboxY + 60);
+                doc.text('Dekan/in der Fakultät', 14, checkboxY + 65);
+            }
+            
+            // Function to generate Dozentenblatt PDF
+            function generateDozentenPDF(doc) {
+                // Set document properties
+                doc.setProperties({
+                    title: 'Dozentenblatt',
+                    subject: 'Präsenzplanung',
+                    author: 'HTWK Leipzig',
+                    keywords: 'htwk, leipzig, dozenten, lehrveranstaltung',
+                    creator: 'HTWK Formular Generator'
+                });
+                
+                // Add header information
+                doc.setFontSize(12);
+                doc.text(`Abgabetermin an DS: ${document.getElementById('dozenten-deadline').textContent}`, 14, 20);
+                doc.text('HTWK Leipzig', 180, 20, { align: 'right' });
+                
+                doc.text('Eingegangen bei DS:', 14, 30);
+                doc.text('Dozentenblatt', 105, 30, { align: 'center' });
+                doc.text(`Sommersemester ${document.getElementById('dozenten-semester').textContent}`, 180, 30, { align: 'right' });
+                
+                doc.text('DS', 14, 40);
+                doc.text('Präsenzplanung', 105, 40, { align: 'center' });
+                doc.text('(ggf. mit digitalen Anteilen)', 180, 40, { align: 'right' });
+                
+                // Add instruction
+                doc.setFontSize(10);
+                doc.text('Jeder Lehrende füllt bitte nur ein Dozentenblatt aus!', 14, 50);
+                
+                // Add professor name
+                doc.setFontSize(12);
+                doc.text(document.getElementById('dozenten-name').textContent, 14, 60);
+                doc.text('Titel Vorname Name', 14, 66);
+                
+                // Add faculty information
+                doc.text(`Fakultät/Bereich: ${document.getElementById('dozenten-faculty').textContent}`, 14, 76);
+                doc.text('FAS FB FDIT FIM FING FWW HSZ MNZ Gast HonProf', 14, 82);
+                
+                // Add work time information
+                doc.text(`Arbeitszeit (Pflichtangabe, außer Gast) ${document.getElementById('dozenten-worktime').textContent}`, 14, 92);
+                
+                // Add contact information
+                doc.text(`E-Mailadresse (Pflichtangabe) ${document.getElementById('dozenten-email').textContent}`, 14, 102);
+                doc.text(`Telefonisch erreichbar unter (optional) ${document.getElementById('dozenten-phone').textContent}`, 14, 108);
+                
+                // Add instruction
+                doc.setFontSize(12);
+                doc.text('Bitte geben Sie in der Tabelle Ihre Einsätze (auch Bedienfunktionen) an!', 14, 118);
+                
+                // Add courses table
+                doc.autoTable({
+                    startY: 125,
+                    head: [
+                        ['lfd. Nr.', 'Fak', 'Stg.', 'FS', 'Gruppen', 'Modulnr./ LE', 'Modulname (Kürzel)', 'Reale SWS (Präsenz)', '', '', 'Digital', 'Bemerkung'],
+                        ['', '', '', '', '', '', '', 'V', 'S', 'P', '', '']
+                    ],
+                    body: [
+                        [
+                            document.getElementById('dozenten-course1-num').textContent,
+                            document.getElementById('dozenten-course1-fak').textContent,
+                            document.getElementById('dozenten-course1-stg').textContent,
+                            document.getElementById('dozenten-course1-fs').textContent,
+                            document.getElementById('dozenten-course1-groups').textContent,
+                            document.getElementById('dozenten-course1-module').textContent,
+                            document.getElementById('dozenten-course1-name').textContent,
+                            document.getElementById('dozenten-course1-v').textContent,
+                            document.getElementById('dozenten-course1-s').textContent,
+                            document.getElementById('dozenten-course1-p').textContent,
+                            document.getElementById('dozenten-course1-digital').textContent,
+                            document.getElementById('dozenten-course1-notes').textContent
+                        ],
+                        [
+                            document.getElementById('dozenten-course2-num').textContent,
+                            document.getElementById('dozenten-course2-fak').textContent,
+                            document.getElementById('dozenten-course2-stg').textContent,
+                            document.getElementById('dozenten-course2-fs').textContent,
+                            document.getElementById('dozenten-course2-groups').textContent,
+                            document.getElementById('dozenten-course2-module').textContent,
+                            document.getElementById('dozenten-course2-name').textContent,
+                            document.getElementById('dozenten-course2-v').textContent,
+                            document.getElementById('dozenten-course2-s').textContent,
+                            document.getElementById('dozenten-course2-p').textContent,
+                            document.getElementById('dozenten-course2-digital').textContent,
+                            document.getElementById('dozenten-course2-notes').textContent
+                        ],
+                        [
+                            document.getElementById('dozenten-course3-num').textContent,
+                            document.getElementById('dozenten-course3-fak').textContent,
+                            document.getElementById('dozenten-course3-stg').textContent,
+                            document.getElementById('dozenten-course3-fs').textContent,
+                            document.getElementById('dozenten-course3-groups').textContent,
+                            document.getElementById('dozenten-course3-module').textContent,
+                            document.getElementById('dozenten-course3-name').textContent,
+                            document.getElementById('dozenten-course3-v').textContent,
+                            document.getElementById('dozenten-course3-s').textContent,
+                            document.getElementById('dozenten-course3-p').textContent,
+                            document.getElementById('dozenten-course3-digital').textContent,
+                            document.getElementById('dozenten-course3-notes').textContent
+                        ]
+                    ],
+                    margin: { top: 10 },
+                    styles: { fontSize: 8 },
+                    headStyles: { fontStyle: 'bold' },
+                    columnStyles: {
+                        0: { cellWidth: 10 },
+                        1: { cellWidth: 10 },
+                        2: { cellWidth: 15 },
+                        3: { cellWidth: 10 },
+                        4: { cellWidth: 30 },
+                        5: { cellWidth: 15 },
+                        6: { cellWidth: 25 },
+                        7: { cellWidth: 8 },
+                        8: { cellWidth: 8 },
+                        9: { cellWidth: 8 },
+                        10: { cellWidth: 10 },
+                        11: { cellWidth: 25 }
+                    }
+                });
+                
+                // Add explanation text
+                doc.setFontSize(10);
+                doc.text('Reale SWS = tatsächlich zu realisierende SWS', 14, doc.autoTable.previous.finalY + 10);
+                doc.text('Beispiel: 2 SWS Seminar für 5 SG BIB einzeln durchgeführt ergibt 10 zu realisierende SWS', 14, doc.autoTable.previous.finalY + 15);
+                doc.text('oder', 14, doc.autoTable.previous.finalY + 20);
+                doc.text('2 SWS Vorlesung für 5 SG BIB, in 2 Blöcken mit jeweils 3 bzw. 2 SG durchgeführt, ergibt 4 zu realisierende SWS', 14, doc.autoTable.previous.finalY + 25);
+                doc.text('Zu jedem aufgeführten Modul/Teilmodul muss ein Zuarbeitsbogen ausgefüllt werden. Mehrere an einem Teilmodul beteiligte Dozenten füllen bitte einen gemeinsamen Zuarbeitsbogen aus!', 14, doc.autoTable.previous.finalY + 30);
+                
+                // Add schedule hints
+                doc.setFontSize(12);
+                doc.text('Hinweise zum Stundenplan:', 14, doc.autoTable.previous.finalY + 40);
+                
+                doc.setFontSize(10);
+                doc.text('- Wahlobligatorische Veranstaltungen werden in der ersten Planungsrunde geplant, wenn die Zahl der teilnehmenden Studenten', 20, doc.autoTable.previous.finalY + 50);
+                doc.text('vorliegt und größer als 9 ist. Fakultative und restliche wahlobligatorische Veranstaltungen werden nach Fertigstellung der', 20, doc.autoTable.previous.finalY + 55);
+                doc.text('Pläne in Absprache mit der Fakultät eingefügt.', 20, doc.autoTable.previous.finalY + 60);
+                
+                doc.text('- Da Doppelplanung der Dozenten nicht möglich ist, ist es notwendig, die Lehrkraft zu benennen, die die Lehrveranstaltung', 20, doc.autoTable.previous.finalY + 70);
+                doc.text('wirklich durchführt (z.B. Seminarleiter, Praktikumsbetreuer).', 20, doc.autoTable.previous.finalY + 75);
+                
+                // Add teaching forms
+                doc.setFontSize(12);
+                doc.text('Lehrformen: Präsenz (mit digitalen Anteilen, wenn didaktisch vorteilhaft)', 14, doc.autoTable.previous.finalY + 85);
+                
+                doc.setFontSize(10);
+                doc.text('- Regelfall: Präsenz (es wird empfohlen, bei Bedarf eine virtuelle Teilnahme zu ermöglichen (hybride LV))', 20, doc.autoTable.previous.finalY + 95);
+                doc.text('- Digital synchron (Wegezeiten für Studierende beachten)', 20, doc.autoTable.previous.finalY + 100);
+                doc.text('- Digital asynchron', 20, doc.autoTable.previous.finalY + 105);
+                
+                // Add digital teaching info
+                doc.setFontSize(12);
+                doc.text('Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen.', 14, doc.autoTable.previous.finalY + 115);
+                
+                doc.setFontSize(10);
+                doc.text('Digitale Lehre steht unter dem Genehmigungsvorbehalt des Dekans und bedarf der vorherigen Vorlage eines Lehrkonzeptes.', 14, doc.autoTable.previous.finalY + 125);
+                doc.text('Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen. Für die Genehmigung und Anrechnung auf das Lehrdeputat', 14, doc.autoTable.previous.finalY + 130);
+                doc.text('sind Mindeststandards zu beachten (siehe Hinweise zu digitaler Lehre an der HTWK Leipzig, Kapitel 4.1).', 14, doc.autoTable.previous.finalY + 135);
+                doc.text('Ferner steht jedwede digitale Lehre unter dem Ermöglichungsvorbehalt der Stunden- und Raumplanung.', 14, doc.autoTable.previous.finalY + 140);
+                
+                // Add research day info
+                doc.text('Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)', 14, doc.autoTable.previous.finalY + 150);
+                doc.text('Die gewünschten Dozenten- und Forschungstage sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen.', 14, doc.autoTable.previous.finalY + 155);
+                doc.text('Nach Prüfung werden diese zentral an DS übermittelt.', 14, doc.autoTable.previous.finalY + 160);
+                
+                // Add blocked times info
+                doc.text('Notwendige Sperrzeiten sind: (nur bei Gästen und Teilzeit!)', 14, doc.autoTable.previous.finalY + 170);
+                doc.text('Die notwendigen Sperrzeiten sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen.', 14, doc.autoTable.previous.finalY + 175);
+                doc.text('Nach Prüfung werden diese zentral an DS übermittelt.', 14, doc.autoTable.previous.finalY + 180);
+                
+                // Add notes table
+                doc.autoTable({
+                    startY: doc.autoTable.previous.finalY + 190,
+                    head: [['Bei Bedarf vom Dozenten auszufüllen', 'Nur vom Dekanat / Studienamt auszufüllen!']],
+                    body: [
+                        [
+                            document.getElementById('dozenten-notes-left').textContent,
+                            document.getElementById('dozenten-notes-right').textContent
+                        ],
+                        ['z.B.: kein Dozententag, dafür Gleichverteilung der LV', ''],
+                        ['', ''],
+                        ['', ''],
+                        ['', ''],
+                        ['', ''],
+                        ['', ''],
+                        ['', ''],
+                        ['', '']
+                    ],
+                    margin: { top: 10 },
+                    styles: { fontSize: 10 },
+                    headStyles: { fontStyle: 'bold' }
+                });
+                
+                // Add new page for attachment
+                doc.addPage();
+                
+                // Add attachment header
+                doc.setFontSize(14);
+                doc.text('HTWK Leipzig', 105, 20, { align: 'center' });
+                doc.text('DS', 105, 30, { align: 'center' });
+                doc.text('Anlage 1 zum Dozentenblatt', 105, 40, { align: 'center' });
+                doc.text(`Sommersemester ${document.getElementById('dozenten-anlage-semester').textContent}`, 105, 50, { align: 'center' });
+                
+                // Add professor name
+                doc.setFontSize(12);
+                doc.text(document.getElementById('dozenten-anlage-name').textContent, 14, 70);
+                doc.text('Titel Vorname Name', 14, 76);
+                
+                // Add external times
+                doc.setFontSize(12);
+                doc.text('Regelmäßig mögliche Einsatzzeiten für externe Dozenten sind:', 14, 90);
+                
+                doc.autoTable({
+                    startY: 100,
+                    head: [['Zeitangabe', '', '']],
+                    body: [
+                        ['Wochen aw/gw/uw', 'Wochentag Mo/Di/Mi/Do/Fr', 'Uhrzeit Ab/Bis']
+                    ],
+                    margin: { top: 10 },
+                    styles: { fontSize: 10 },
+                    headStyles: { fontStyle: 'bold' }
+                });
+                
+                doc.setFontSize(10);
+                doc.text('Anmerkung', 14, doc.autoTable.previous.finalY + 10);
+                
+                // Add blocked times
+                doc.setFontSize(12);
+                doc.text('Notwendige regelmäßige Sperrzeiten für interne Dozenten sind:', 14, doc.autoTable.previous.finalY + 25);
+                
+                doc.autoTable({
+                    startY: doc.autoTable.previous.finalY + 35,
+                    head: [['Zeitangabe', '', '']],
+                    body: [
+                        ['Wochen aw/gw/uw', 'Wochentag Mo/Di/Mi/Do/Fr', 'Uhrzeit Bis/Ab'],
+                        [
+                            document.getElementById('dozenten-blocked1-week').textContent,
+                            document.getElementById('dozenten-blocked1-day').textContent,
+                            document.getElementById('dozenten-blocked1-time').textContent
+                        ],
+                        [
+                            document.getElementById('dozenten-blocked2-week').textContent,
+                            document.getElementById('dozenten-blocked2-day').textContent,
+                            document.getElementById('dozenten-blocked2-time').textContent
+                        ]
+                    ],
+                    margin: { top: 10 },
+                    styles: { fontSize: 10 },
+                    headStyles: { fontStyle: 'bold' }
+                });
+                
+                // Add research day info
+                doc.setFontSize(12);
+                doc.text('Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)', 14, doc.autoTable.previous.finalY + 20);
+                
+                // Add research day table
+                doc.autoTable({
+                    startY: doc.autoTable.previous.finalY + 30,
+                    head: [['Tag ist egal', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag']],
+                    body: [
+                        ['□ D □ F aber nicht:', '□ D □ F', '□ D □ F', '□ D □ F', '☒ D □ F', '□ D □ F']
+                    ],
+                    margin: { top: 10 },
+                    styles: { fontSize: 10 },
+                    headStyles: { fontStyle: 'bold' }
+                });
+                
+                // Add research day hint
+                doc.setFontSize(10);
+                doc.text('Hinweis: D – Dozententag; F – Forschungstag → jeweils nur einmal auswählen!', 14, doc.autoTable.previous.finalY + 10);
+                
+                // Add signature lines
+                doc.setFontSize(10);
+                doc.line(14, doc.autoTable.previous.finalY + 30, 60, doc.autoTable.previous.finalY + 30);
+                doc.line(150, doc.autoTable.previous.finalY + 30, 196, doc.autoTable.previous.finalY + 30);
+                
+                doc.text('Datum, Unterschrift', 14, doc.autoTable.previous.finalY + 35);
+                doc.text('Verantwortliche/r Dozent/in', 14, doc.autoTable.previous.finalY + 40);
+                
+                doc.text('Datum, Unterschrift', 150, doc.autoTable.previous.finalY + 35);
+                doc.text('Dekan/in der Fakultät', 150, doc.autoTable.previous.finalY + 40);
+            }
+            
+            // Function to load RDF data (to be implemented by your colleague)
+            function loadRDFData(rdfData) {
+                // This function will be called by your colleague's code to populate the form
+                // with data from the RDF
+                
+                // Determine which form to show based on RDF data
+                if (rdfData.formType === 'zuarbeit') {
+                    document.getElementById('form-type').value = 'zuarbeit';
+                    zuarbeitForm.classList.remove('hidden');
+                    dozentenForm.classList.add('hidden');
+                    
+                    // Populate Zuarbeit form fields
+                    document.getElementById('zuarbeit-deadline').textContent = rdfData.deadline || '20.11.2023';
+                    document.getElementById('zuarbeit-semester').textContent = rdfData.semester || '2024';
+                    document.getElementById('zuarbeit-year').textContent = rdfData.year || '2022';
+                    document.getElementById('zuarbeit-faculty').textContent = rdfData.faculty || 'IM(I)';
+                    document.getElementById('zuarbeit-program').textContent = rdfData.program || 'INB+MIB';
+                    document.getElementById('zuarbeit-semester-num').textContent = rdfData.semesterNum || '4.';
+                    document.getElementById('zuarbeit-groups').textContent = rdfData.groups || '22INB-1+2+3 + 22MIB-1+2';
+                    document.getElementById('zuarbeit-module-name').textContent = rdfData.moduleName || 'C249 Semantic Web';
+                    document.getElementById('zuarbeit-module-name2').textContent = rdfData.moduleName2 || 'C249 Semantic Web';
+                    document.getElementById('zuarbeit-vorlesung').textContent = rdfData.vorlesungSWS || '2';
+                    document.getElementById('zuarbeit-seminar').textContent = rdfData.seminarSWS || '2';
+                    document.getElementById('zuarbeit-praktikum').textContent = rdfData.praktikumSWS || '0';
+                    document.getElementById('zuarbeit-room-vl').textContent = rdfData.roomVl || 'Gu, Li, Tr';
+                    document.getElementById('zuarbeit-room-sem').textContent = rdfData.roomSem || 'Z423,Z430';
+                    document.getElementById('zuarbeit-tech').textContent = rdfData.tech || 'Beamer/WLAN';
+                    document.getElementById('zuarbeit-lecturer-name').textContent = rdfData.lecturerName || 'FIM(I)/Prof. Thomas Riechert';
+                    document.getElementById('zuarbeit-lecturer-groups').textContent = rdfData.lecturerGroups || '22INB-1+2 + 22MIB-1+2';
+                    document.getElementById('zuarbeit-lecturer-desc').textContent = rdfData.lecturerDesc || 'Vorlesung gemeinsam';
+                    document.getElementById('zuarbeit-seminar-leader1').textContent = rdfData.seminarLeader1 || 'FIM(I)/ Prof. Thomas Riechert';
+                    document.getElementById('zuarbeit-seminar-groups1').textContent = rdfData.seminarGroups1 || '22INB-1+2 +3';
+                    document.getElementById('zuarbeit-seminar-leader2').textContent = rdfData.seminarLeader2 || 'FIM(I)/ Prof. Thomas Riechert';
+                    document.getElementById('zuarbeit-seminar-groups2').textContent = rdfData.seminarGroups2 || '22MIB-1+2';
+                    
+                    // Set checkboxes based on RDF data
+                    if (rdfData.options) {
+                        document.getElementById('zuarbeit-option1').checked = rdfData.options.option1 !== false;
+                        document.getElementById('zuarbeit-option2').checked = rdfData.options.option2 || false;
+                        document.getElementById('zuarbeit-option3').checked = rdfData.options.option3 || false;
+                        document.getElementById('zuarbeit-option4').checked = rdfData.options.option4 !== false;
+                        document.getElementById('zuarbeit-option5').checked = rdfData.options.option5 || false;
+                    }
+                } else {
+                    document.getElementById('form-type').value = 'dozenten';
+                    zuarbeitForm.classList.add('hidden');
+                    dozentenForm.classList.remove('hidden');
+                    
+                    // Populate Dozenten form fields
+                    document.getElementById('dozenten-deadline').textContent = rdfData.deadline || '20.11.2023';
+                    document.getElementById('dozenten-semester').textContent = rdfData.semester || '2024';
+                    document.getElementById('dozenten-name').textContent = rdfData.name || 'Prof. Dr. rer. nat. Thomas Riechert';
+                    document.getElementById('dozenten-faculty').textContent = rdfData.facultyBoxes || '□ □ □ ☒ □ □ □ □ □';
+                    document.getElementById('dozenten-worktime').textContent = rdfData.worktime || '☒ Vollzeit □ Teilzeit';
+                    document.getElementById('dozenten-email').textContent = rdfData.email || 'thomas.riechert@htwk-leipzig.de';
+                    document.getElementById('dozenten-phone').textContent = rdfData.phone || '6413';
+                    document.getElementById('dozenten-anlage-semester').textContent = rdfData.semester || '2024';
+                    document.getElementById('dozenten-anlage-name').textContent = rdfData.name || 'Prof. Dr. rer. nat. Thomas Riechert';
+                    
+                    // Populate courses
+                    if (rdfData.courses && rdfData.courses.length > 0) {
+                        const course1 = rdfData.courses[0];
+                        document.getElementById('dozenten-course1-num').textContent = course1.num || '1';
+                        document.getElementById('dozenten-course1-fak').textContent = course1.fak || 'IM(I)';
+                        document.getElementById('dozenten-course1-stg').textContent = course1.stg || 'MIB';
+                        document.getElementById('dozenten-course1-fs').textContent = course1.fs || '4.';
+                        document.getElementById('dozenten-course1-groups').textContent = course1.groups || '22MIB-1+2 22MIB-BIN';
+                        document.getElementById('dozenten-course1-module').textContent = course1.module || 'C902';
+                        document.getElementById('dozenten-course1-name').textContent = course1.name || 'Wissenschafts- kommunikation';
+                        document.getElementById('dozenten-course1-v').textContent = course1.v || '1';
+                        document.getElementById('dozenten-course1-s').textContent = course1.s || '2';
+                        document.getElementById('dozenten-course1-p').textContent = course1.p || '0';
+                        document.getElementById('dozenten-course1-digital').textContent = course1.digital || 'nein';
+                        document.getElementById('dozenten-course1-notes').textContent = course1.notes || '3 Seminargruppen 22MIB-2 F.Stolze';
+                        
+                        if (rdfData.courses.length > 1) {
+                            const course2 = rdfData.courses[1];
+                            document.getElementById('dozenten-course2-num').textContent = course2.num || '2';
+                            document.getElementById('dozenten-course2-fak').textContent = course2.fak || 'IM(I)';
+                            document.getElementById('dozenten-course2-stg').textContent = course2.stg || 'INB+ MIB';
+                            document.getElementById('dozenten-course2-fs').textContent = course2.fs || '4.';
+                            document.getElementById('dozenten-course2-groups').textContent = course2.groups || '22INB- 1+2+3 22MIB-1+2 22MIB-BIN';
+                            document.getElementById('dozenten-course2-module').textContent = course2.module || 'C249';
+                            document.getElementById('dozenten-course2-name').textContent = course2.name || 'Semantic Web';
+                            document.getElementById('dozenten-course2-v').textContent = course2.v || '2';
+                            document.getElementById('dozenten-course2-s').textContent = course2.s || '4';
+                            document.getElementById('dozenten-course2-p').textContent = course2.p || '0';
+                            document.getElementById('dozenten-course2-digital').textContent = course2.digital || 'nein';
+                            document.getElementById('dozenten-course2-notes').textContent = course2.notes || '2 Gruppen';
+                        }
+                        
+                        if (rdfData.courses.length > 2) {
+                            const course3 = rdfData.courses[2];
+                            document.getElementById('dozenten-course3-num').textContent = course3.num || '3';
+                            document.getElementById('dozenten-course3-fak').textContent = course3.fak || 'IM(I)';
+                            document.getElementById('dozenten-course3-stg').textContent = course3.stg || 'INB+ MIB';
+                            document.getElementById('dozenten-course3-fs').textContent = course3.fs || '4.';
+                            document.getElementById('dozenten-course3-groups').textContent = course3.groups || '22INB- 1+2+3 22MIB-1+2 22MIB-BIN';
+                            document.getElementById('dozenten-course3-module').textContent = course3.module || 'C977';
+                            document.getElementById('dozenten-course3-name').textContent = course3.name || 'E-Business';
+                            document.getElementById('dozenten-course3-v').textContent = course3.v || '2';
+                            document.getElementById('dozenten-course3-s').textContent = course3.s || '4';
+                            document.getElementById('dozenten-course3-p').textContent = course3.p || '0';
+                            document.getElementById('dozenten-course3-digital').textContent = course3.digital || 'nein';
+                            document.getElementById('dozenten-course3-notes').textContent = course3.notes || '2 Gruppen';
+                        }
+                    }
+                    
+                    // Populate blocked times
+                    if (rdfData.blockedTimes && rdfData.blockedTimes.length > 0) {
+                        document.getElementById('dozenten-blocked1-week').textContent = rdfData.blockedTimes[0].week || 'aw';
+                        document.getElementById('dozenten-blocked1-day').textContent = rdfData.blockedTimes[0].day || 'Mo-Fr';
+                        document.getElementById('dozenten-blocked1-time').textContent = rdfData.blockedTimes[0].time || 'Bis 8:00';
+                        
+                        if (rdfData.blockedTimes.length > 1) {
+                            document.getElementById('dozenten-blocked2-week').textContent = rdfData.blockedTimes[1].week || 'aw';
+                            document.getElementById('dozenten-blocked2-day').textContent = rdfData.blockedTimes[1].day || 'Mo-Fr';
+                            document.getElementById('dozenten-blocked2-time').textContent = rdfData.blockedTimes[1].time || 'Ab 17:00';
+                        }
+                    }
+                    
+                    // Populate notes
+                    if (rdfData.notes) {
+                        document.getElementById('dozenten-notes-left').textContent = rdfData.notes.left || 'Wichtige Hinweise zur Semesterplanung: Keine Sperrzeiten!!!';
+                        document.getElementById('dozenten-notes-right').textContent = rdfData.notes.right || 'Hinweise bei Rückgabe an den Dozenten:';
+                    }
+                }
+            }
+            
+            // Make the loadRDFData function available globally
+            window.loadRDFData = loadRDFData;
+        });
+    </script>
+</body>
+</html>

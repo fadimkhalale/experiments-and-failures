@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>PDF-Manager</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; }
+    th { background: #eee; }
+    input, select { margin: 0.5rem 0; padding: 0.3rem; }
+  </style>
+</head>
+<body>
+  <h1>PDF-Manager</h1>
+
+  <label>Filter nach Dozent:</label>
+  <input type="text" id="filterDozent" placeholder="z.B. Müller">
+
+  <label>Filter nach Semester:</label>
+  <select id="filterSemester">
+    <option value="">Alle</option>
+    <option value="Wintersemester">Wintersemester</option>
+    <option value="Sommersemester">Sommersemester</option>
+  </select>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Dateiname</th>
+        <th>Datum</th>
+        <th>Download</th>
+      </tr>
+    </thead>
+    <tbody id="pdfTable"></tbody>
+  </table>
+
+  <script>
+    async function loadPDFs() {
+      const res = await fetch('/list');
+      const data = await res.json();
+      const tbody = document.getElementById('pdfTable');
+      const dozentFilter = document.getElementById('filterDozent').value.toLowerCase();
+      const semFilter = document.getElementById('filterSemester').value;
+
+      tbody.innerHTML = '';
+      data.forEach(pdf => {
+        const dozent = pdf.dozent.toLowerCase();
+        const semester = pdf.semester;
+        if ((dozentFilter && !dozent.includes(dozentFilter)) || (semFilter && semFilter !== semester)) return;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${pdf.name}</td>
+          <td>${pdf.date}</td>
+          <td><a href="/pdfs/${pdf.name}" download>Download</a></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    document.getElementById('filterDozent').addEventListener('input', loadPDFs);
+    document.getElementById('filterSemester').addEventListener('change', loadPDFs);
+    loadPDFs();
+  </script>
+</body>
+</html>

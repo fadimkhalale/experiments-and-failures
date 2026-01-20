@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dozentenblatt Wintersemester 2025/26</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+            color: #000;
+        }
+        .container {
+            width: 210mm;
+            margin: 0 auto;
+            padding: 10mm;
+            box-sizing: border-box;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 10mm;
+        }
+        .header h1 {
+            font-size: 16px;
+            margin-bottom: 5mm;
+        }
+        .header .info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5mm;
+        }
+        .section {
+            margin-bottom: 8mm;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 3mm;
+            text-decoration: underline;
+        }
+        .form-row {
+            display: flex;
+            margin-bottom: 2mm;
+            align-items: center;
+        }
+        .form-label {
+            width: 40mm;
+            font-weight: bold;
+        }
+        .form-input {
+            flex-grow: 1;
+            border-bottom: 1px solid #000;
+            min-height: 5mm;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5mm;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-right: 5mm;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5mm;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 1mm;
+            text-align: center;
+            font-size: 10px;
+        }
+        th {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+        .signature-area {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15mm;
+        }
+        .signature-box {
+            width: 60mm;
+            border-top: 1px solid #000;
+            padding-top: 2mm;
+        }
+        .page-break {
+            page-break-after: always;
+        }
+        .notes {
+            font-size: 10px;
+            margin-top: 2mm;
+        }
+        .two-columns {
+            display: flex;
+            justify-content: space-between;
+        }
+        .column {
+            width: 48%;
+        }
+        .time-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5mm;
+        }
+        .time-table th, .time-table td {
+            border: 1px solid #000;
+            padding: 1mm;
+        }
+        .radio-group {
+            display: flex;
+            gap: 5mm;
+        }
+        .radio-item {
+            display: flex;
+            align-items: center;
+        }
+        .footer {
+            font-size: 10px;
+            text-align: center;
+            margin-top: 5mm;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="info">
+                <div>Abgabetermin an DS: <input type="text" value="01.06.2025" class="form-input" style="width: 20mm;"></div>
+                <div>Eingegangen bei DS: <input type="text" class="form-input" style="width: 20mm;"></div>
+            </div>
+            <h1>HTWK Leipzig<br>DS</h1>
+            <h1>Dozentenblatt</h1>
+            <h2>semester </h2>
+            <h3>Präsenzplanung<br>(ggf. mit digitalen Anteilen)</h3>
+            <p>Jeder Lehrende füllt bitte nur ein Dozentenblatt aus!</p>
+        </div>
+
+        <div class="section">
+            <div class="form-row">
+                <div class="form-label">Titel</div>
+                <div class="form-input" style="width: 20mm;"><input type="text" style="width: 100%; border: none;"></div>
+                <div class="form-label" style="width: 20mm; margin-left: 5mm;">Vorname</div>
+                <div class="form-input" style="flex-grow: 1;"><input type="text" style="width: 100%; border: none;"></div>
+                <div class="form-label" style="width: 20mm; margin-left: 5mm;">Name</div>
+                <div class="form-input" style="flex-grow: 1;"><input type="text" style="width: 100%; border: none;"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="form-row">
+                <div class="form-label">Fakultät/Bereich:</div>
+                <div class="checkbox-group">
+                    <div class="checkbox-item"><input type="checkbox"> FAS</div>
+                    <div class="checkbox-item"><input type="checkbox"> FB</div>
+                    <div class="checkbox-item"><input type="checkbox"> FDIT</div>
+                    <div class="checkbox-item"><input type="checkbox"> FIM</div>
+                    <div class="checkbox-item"><input type="checkbox"> FING</div>
+                    <div class="checkbox-item"><input type="checkbox"> FWW</div>
+                    <div class="checkbox-item"><input type="checkbox"> HSZ</div>
+                    <div class="checkbox-item"><input type="checkbox"> MNZ</div>
+                    <div class="checkbox-item"><input type="checkbox"> Gast</div>
+                    <div class="checkbox-item"><input type="checkbox"> HonProf</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="form-row">
+                <div class="form-label">Arbeitszeit (Pflichtangabe, außer Gast)</div>
+                <div class="radio-group">
+                    <div class="radio-item">
+                        <input type="radio" name="work_time" id="fulltime"> <label for="fulltime">Vollzeit</label>
+                        <input type="text" style="width: 10mm; border-bottom: 1px solid #000; margin-left: 2mm;">
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" name="work_time" id="parttime"> <label for="parttime">Teilzeit</label>
+                        <input type="text" style="width: 10mm; border-bottom: 1px solid #000; margin-left: 2mm;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="form-row">
+                <div class="form-label">E-Mailadresse (Pflichtangabe)</div>
+                <div class="form-input"><input type="email" style="width: 100%; border: none;"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-label">Telefonisch erreichbar unter (optional)</div>
+                <div class="form-input"><input type="tel" style="width: 100%; border: none;"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Bitte geben Sie in der Tabelle Ihre Einsätze (auch Bedienfunktionen) an!</div>
+            <div class="section-title">Durchzuführende Lehrveranstaltungen</div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ifd. Nr.</th>
+                        <th>Fak</th>
+                        <th>Stg.</th>
+                        <th>FS</th>
+                        <th>Gruppen</th>
+                        <th>Modulnr./ LE</th>
+                        <th>Modulname (Kürzel)</th>
+                        <th colspan="3">Reale SWS (Präsenz)</th>
+                        <th>Digital</th>
+                        <th>Bemerkung</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th>V</th>
+                        <th>S</th>
+                        <th>P</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                    </tr>
+                    <!-- Repeat for more rows as needed -->
+                </tbody>
+            </table>
+            
+            <div class="notes">
+                <p>Reale SWS = tatsächlich zu realisierende SWS</p>
+                <p>Beispiel: 2 SWS Seminar für 5 SG BIB einzeln durchgeführt ergibt 10 zu realisierende SWS</p>
+                <p>oder</p>
+                <p>2 SWS Vorlesung für 5 SG BIB, in 2 Blöcken mit jeweils 3 bzw. 2 SG durchgeführt, ergibt 4 zu realisierende SWS</p>
+                <p>Zu jedem aufgeführten Modul/Teilmodul muss ein Zuarbeitsbogen ausgefüllt werden.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Hinweise zum Stundenplan:</div>
+            <ul>
+                <li>Wahlobligatorische Veranstaltungen werden in der ersten Planungsrunde geplant, wenn die Zahl der teilnehmenden Studenten vorliegt und größer als 9 ist. Fakultative und restliche wahlobligatorische Veranstaltungen werden nach Fertigstellung der Pläne in Absprache mit der Fakultät eingefügt.</li>
+                <li>Da Doppelplanung der Dozenten nicht möglich ist, ist es notwendig, die Lehrkraft zu benennen, die die Lehrveranstaltung wirklich durchführt (z.B. Seminarleiter, Praktikumsbetreuer).</li>
+            </ul>
+            
+            <div class="section-title">Lehrformen: Präsenz (mit digitalen Anteilen, wenn didaktisch vorteilhaft)</div>
+            <ul>
+                <li>Regelfall: Präsenz (es wird empfohlen, bei Bedarf eine virtuelle Teilnahme zu ermöglichen (hybride LV))</li>
+                <li>Digital synchron (Wegezeiten für Studierende beachten)</li>
+                <li>Digital asynchron</li>
+            </ul>
+            
+            <div class="section-title">Digitale Lehre steht unter dem Genehmigungsvorbehalt des Dekans und bedarf der vorherigen Vorlage eines Lehrkonzeptes.</div>
+            <div class="section-title">Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen. Für die Genehmigung und Anrechnung auf das Lehrdeputat sind Mindeststandards zu beachten (siehe Hinweise zu digitaler Lehre an der HTWK Leipzig, Kapitel 4.1).</div>
+            <div class="section-title">Ferner steht jedwede digitale Lehre unter dem Ermöglichungsvorbehalt der Stunden- und Raumplanung.</div>
+        </div>
+
+        <div class="section">
+            <div class="form-row">
+                <div class="form-label">Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)</div>
+                <div class="form-input">Die gewünschten Dozenten- und Forschungstage sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen. Nach Prüfung werden diese zentral an DS übermittelt.</div>
+            </div>
+            <div class="form-row">
+                <div class="form-label">Notwendige Sperrzeiten sind: (nur bei Gästen und Teilzeit!)</div>
+                <div class="form-input">Die notwendigen Sperrzeiten sind als Anlage 1 zum Dozentenblatt in der Fakultät einzureichen. Nach Prüfung werden diese zentral an DS übermittelt.</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="two-columns">
+                <div class="column">
+                    <div class="section-title">Bei Bedarf vom Dozenten auszufüllen</div>
+                    <div>Wichtige Hinweise zur Semesterplanung: <input type="text" style="width: 100%; border-bottom: 1px solid #000;"></div>
+                    <div style="height: 30mm;"></div>
+                </div>
+                <div class="column">
+                    <div class="section-title">Nur vom Dekanat / Studienamt auszufüllen!</div>
+                    <div>Hinweise bei Rückgabe an den Dozenten:</div>
+                    <div style="height: 30mm;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="signature-area">
+            <div class="signature-box">Datum, Unterschrift<br>Verantwortlicher Dozent/in</div>
+            <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
+        </div>
+    </div>
+
+    <!-- Page 2 - Anlage 1 -->
+    <div class="container page-break">
+        <div class="header">
+            <h1>HTWK Leipzig<br>DS</h1>
+            <h2>Anlage 1 zum Dozentenblatt</h2>
+        </div>
+
+        <div class="section">
+            <div class="form-row">
+                <div class="form-label">Titel</div>
+                <div class="form-input" style="width: 20mm;"><input type="text" style="width: 100%; border: none;"></div>
+                <div class="form-label" style="width: 20mm; margin-left: 5mm;">Vorname</div>
+                <div class="form-input" style="flex-grow: 1;"><input type="text" style="width: 100%; border: none;"></div>
+                <div class="form-label" style="width: 20mm; margin-left: 5mm;">Name</div>
+                <div class="form-input" style="flex-grow: 1;"><input type="text" style="width: 100%; border: none;"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Regelmäßig mögliche Einsatzzeiten für externe Dozenten sind:</div>
+            <table class="time-table">
+                <thead>
+                    <tr>
+                        <th colspan="3">Zeitangabe</th>
+                        <th>Anmerkung</th>
+                    </tr>
+                    <tr>
+                        <th>Wochen</th>
+                        <th>Wochentag</th>
+                        <th>Uhrzeit</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                    </tr>
+                    <!-- Repeat for more rows as needed -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Notwendige regelmäßige Sperrzeiten für interne Dozenten sind:</div>
+            <table class="time-table">
+                <thead>
+                    <tr>
+                        <th colspan="3">Zeitangabe</th>
+                        <th>Begründung</th>
+                    </tr>
+                    <tr>
+                        <th>Wochen</th>
+                        <th>Wochentag</th>
+                        <th>Uhrzeit</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                        <td><input type="text" style="width: 100%; border: none;"></td>
+                    </tr>
+                    <!-- Repeat for more rows as needed -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)</div>
+            <table class="time-table">
+                <thead>
+                    <tr>
+                        <th>Tag ist egal</th>
+                        <th>Montag</th>
+                        <th>Dienstag</th>
+                        <th>Mittwoch</th>
+                        <th>Donnerstag</th>
+                        <th>Freitag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="checkbox-item"><input type="checkbox"> D</div>
+                            <div class="checkbox-item"><input type="checkbox"> F</div>
+                        </td>
+                        <td>
+                            <div class="checkbox-item"><input type="checkbox"> D</div>
+                            <div class="checkbox-item"><input type="checkbox"> F</div>
+                        </td>
+                        <td>
+                            <div class="checkbox-item"><input type="checkbox"> D</div>
+                            <div class="checkbox-item"><input type="checkbox"> F</div>
+                        </td>
+                        <td>
+                            <div class="checkbox-item"><input type="checkbox"> D</div>
+                            <div class="checkbox-item"><input type="checkbox"> F</div>
+                        </td>
+                        <td>
+                            <div class="checkbox-item"><input type="checkbox"> D</div>
+                            <div class="checkbox-item"><input type="checkbox"> F</div>
+                        </td>
+                        <td>
+                            <div class="checkbox-item"><input type="checkbox"> D</div>
+                            <div class="checkbox-item"><input type="checkbox"> F</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="6">aber nicht: <input type="text" style="width: 100mm; border-bottom: 1px solid #000;"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="notes">
+                <p>Hinweis: D – Dozententag; F – Forschungstag → jeweils nur einmal auswählen!</p>
+            </div>
+        </div>
+
+        <div class="signature-area">
+            <div class="signature-box">Datum, Unterschrift<br>Verantwortlicher Dozent/in</div>
+            <div class="signature-box">Datum, Unterschrift<br>Dekan/in der Fakultät</div>
+        </div>
+    </div>
+</body>
+</html>

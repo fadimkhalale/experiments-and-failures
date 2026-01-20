@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTWK Formular-Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --htwk-blue: #003366;
+            --htwk-light-blue: #005b9f;
+            --htwk-gray: #5b6770;
+            --htwk-light-gray: #f5f5f5;
+            --htwk-white: #ffffff;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--htwk-light-gray);
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: var(--htwk-white);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        
+        .header {
+            background-color: var(--htwk-blue);
+            color: var(--htwk-white);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .form-selector {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 15px;
+        }
+        
+        .form-option {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background-color: var(--htwk-light-gray);
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .form-option:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .form-option.active {
+            background-color: var(--htwk-blue);
+            color: var(--htwk-white);
+            border-color: var(--htwk-blue);
+        }
+        
+        .form-container {
+            display: none;
+        }
+        
+        .form-container.active {
+            display: block;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            margin-bottom: 15px;
+            resize: vertical;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--htwk-blue);
+            color: var(--htwk-white);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--htwk-light-blue);
+        }
+        
+        .btn-secondary {
+            background-color: var(--htwk-gray);
+            color: var(--htwk-white);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4a545a;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .form-description {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid var(--htwk-blue);
+            margin-bottom: 20px;
+            border-radius: 0 5px 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>HTWK Formular-Generator</h1>
+            <div>Sommersemester 2024</div>
+        </div>
+        
+        <div class="form-selector">
+            <div class="form-option active" data-form="dozentenblatt">Dozentenblatt</div>
+            <div class="form-option" data-form="zuarbeitsblatt">Zuarbeitsblatt</div>
+        </div>
+        
+        <div class="form-description" id="formDescription">
+            <strong>Dozentenblatt</strong>: Für die allgemeine Lehrveranstaltungsplanung. Jeder Lehrende füllt bitte nur ein Dozentenblatt aus!
+        </div>
+        
+        <div class="form-container active" id="dozentenblattForm">
+            <h2>Dozentenblatt - RDF/Turtle Input</h2>
+            <textarea id="dozentenblattInput" placeholder="Fügen Sie hier die RDF/Turtle-Daten für das Dozentenblatt ein..."></textarea>
+            
+            <div class="button-group">
+                <button class="btn btn-primary" id="generateDozentenblattBtn">PDF generieren</button>
+            </div>
+        </div>
+        
+        <div class="form-container" id="zuarbeitsblattForm">
+            <h2>Zuarbeitsblatt - RDF/Turtle Input</h2>
+            <textarea id="zuarbeitsblattInput" placeholder="Fügen Sie hier die RDF/Turtle-Daten für das Zuarbeitsblatt ein..."></textarea>
+            
+            <div class="button-group">
+                <button class="btn btn-primary" id="generateZuarbeitsblattBtn">PDF generieren</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for the jsPDF library to load
+        document.addEventListener('DOMContentLoaded', function() {
+            const { jsPDF } = window.jspdf;
+            
+            // Form selection
+            const formOptions = document.querySelectorAll('.form-option');
+            const formContainers = document.querySelectorAll('.form-container');
+            const formDescription = document.getElementById('formDescription');
+            
+            formOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Update active option
+                    formOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show selected form
+                    const formType = this.dataset.form;
+                    formContainers.forEach(container => container.classList.remove('active'));
+                    document.getElementById(`${formType}Form`).classList.add('active');
+                    
+                    // Update description
+                    if (formType === 'dozentenblatt') {
+                        formDescription.innerHTML = '<strong>Dozentenblatt</strong>: Für die allgemeine Lehrveranstaltungsplanung. Jeder Lehrende füllt bitte nur ein Dozentenblatt aus!';
+                    } else {
+                        formDescription.innerHTML = '<strong>Zuarbeitsblatt</strong>: Für detaillierte Planung spezifischer Module. Muss für jedes Modul/Teilmodul ausgefüllt werden.';
+                    }
+                });
+            });
+            
+            // Generate Dozentenblatt PDF
+            document.getElementById('generateDozentenblattBtn').addEventListener('click', function() {
+                const rdfInput = document.getElementById('dozentenblattInput').value;
+                if (!rdfInput.trim()) {
+                    alert('Bitte RDF/Turtle-Daten für das Dozentenblatt eingeben.');
+                    return;
+                }
+                
+                try {
+                    const data = parseDozentenblattRdf(rdfInput);
+                    generateDozentenblattPdf(data);
+                } catch (e) {
+                    alert('Fehler beim Parsen der RDF-Daten: ' + e.message);
+                    console.error(e);
+                }
+            });
+            
+            // Generate Zuarbeitsblatt PDF
+            document.getElementById('generateZuarbeitsblattBtn').addEventListener('click', function() {
+                const rdfInput = document.getElementById('zuarbeitsblattInput').value;
+                if (!rdfInput.trim()) {
+                    alert('Bitte RDF/Turtle-Daten für das Zuarbeitsblatt eingeben.');
+                    return;
+                }
+                
+                try {
+                    const data = parseZuarbeitsblattRdf(rdfInput);
+                    generateZuarbeitsblattPdf(data);
+                } catch (e) {
+                    alert('Fehler beim Parsen der RDF-Daten: ' + e.message);
+                    console.error(e);
+                }
+            });
+            
+            // Parser for Dozentenblatt RDF
+            function parseDozentenblattRdf(rdfText) {
+                const data = {
+                    title: '',
+                    firstName: '',
+                    lastName: '',
+                    faculty: '',
+                    employmentStatus: '',
+                    email: '',
+                    phone: '',
+                    submissionDeadline: '',
+                    courses: [],
+                    timeRestrictions: [],
+                    preferredDay: '',
+                    preferredDayType: '',
+                    notes: ''
+                };
+                
+                // Extract basic information
+                const titleMatch = rdfText.match(/htwk:title\s+"([^"]+)"/);
+                if (titleMatch) data.title = titleMatch[1];
+                
+                const firstNameMatch = rdfText.match(/htwk:firstName\s+"([^"]+)"/);
+                if (firstNameMatch) data.firstName = firstNameMatch[1];
+                
+                const lastNameMatch = rdfText.match(/htwk:lastName\s+"([^"]+)"/);
+                if (lastNameMatch) data.lastName = lastNameMatch[1];
+                
+                const facultyMatch = rdfText.match(/htwk:faculty\s+htwk:([^\s;]+)/);
+                if (facultyMatch) data.faculty = facultyMatch[1];
+                
+                const statusMatch = rdfText.match(/htwk:employmentStatus\s+htwk:([^\s;]+)/);
+                if (statusMatch) data.employmentStatus = statusMatch[1];
+                
+                const emailMatch = rdfText.match(/htwk:email\s+"([^"]+)"/);
+                if (emailMatch) data.email = emailMatch[1];
+                
+                const phoneMatch = rdfText.match(/htwk:phoneExtension\s+"([^"]+)"/);
+                if (phoneMatch) data.phone = phoneMatch[1];
+                
+                const deadlineMatch = rdfText.match(/htwk:submissionDeadline\s+"([^"]+)"/);
+                if (deadlineMatch) data.submissionDeadline = deadlineMatch[1];
+                
+                const notesMatch = rdfText.match(/htwk:notes\s+"([^"]+)"/);
+                if (notesMatch) data.notes = notesMatch[1];
+                
+                // Extract courses
+                const courseBlocks = rdfText.split('htwk:teachingBlock [');
+                if (courseBlocks.length > 1) {
+                    for (let i = 1; i < courseBlocks.length; i++) {
+                        const courseBlock = courseBlocks[i].split(']')[0];
+                        const course = {
+                            number: '',
+                            fak: '',
+                            stg: '',
+                            fs: '',
+                            groups: '',
+                            moduleCode: '',
+                            moduleName: '',
+                            v: 0,
+                            s: 0,
+                            p: 0,
+                            digital: false,
+                            note: ''
+                        };
+                        
+                        const numberMatch = courseBlock.match(/htwk:blockNumber\s+"([^"]+)"/);
+                        if (numberMatch) course.number = numberMatch[1];
+                        
+                        const fakMatch = courseBlock.match(/htwk:facultyCode\s+"([^"]+)"/);
+                        if (fakMatch) course.fak = fakMatch[1];
+                        
+                        const stgMatch = courseBlock.match(/htwk:degreeProgram\s+"([^"]+)"/);
+                        if (stgMatch) course.stg = stgMatch[1];
+                        
+                        const fsMatch = courseBlock.match(/htwk:semester\s+"([^"]+)"/);
+                        if (fsMatch) course.fs = fsMatch[1];
+                        
+                        const groupsMatch = courseBlock.match(/htwk:groups\s+"([^"]+)"/);
+                        if (groupsMatch) course.groups = groupsMatch[1];
+                        
+                        const moduleCodeMatch = courseBlock.match(/htwk:moduleCode\s+"([^"]+)"/);
+                        if (moduleCodeMatch) course.moduleCode = moduleCodeMatch[1];
+                        
+                        const moduleNameMatch = courseBlock.match(/htwk:moduleName\s+"([^"]+)"/);
+                        if (moduleNameMatch) course.moduleName = moduleNameMatch[1];
+                        
+                        const vMatch = courseBlock.match(/htwk:lectureHours\s+(\d+)/);
+                        if (vMatch) course.v = parseInt(vMatch[1]);
+                        
+                        const sMatch = courseBlock.match(/htwk:seminarHours\s+(\d+)/);
+                        if (sMatch) course.s = parseInt(sMatch[1]);
+                        
+                        const pMatch = courseBlock.match(/htwk:practicalHours\s+(\d+)/);
+                        if (pMatch) course.p = parseInt(pMatch[1]);
+                        
+                        const digitalMatch = courseBlock.match(/htwk:hasDigitalComponent\s+(true|false)/);
+                        if (digitalMatch) course.digital = digitalMatch[1] === 'true';
+                        
+                        const noteMatch = courseBlock.match(/htwk:note\s+"([^"]+)"/);
+                        if (noteMatch) course.note = noteMatch[1];
+                        
+                        if (course.moduleCode) data.courses.push(course);
+                    }
+                }
+                
+                // Extract time restrictions
+                const restrictionBlocks = rdfText.split('htwk:timeRestriction [');
+                if (restrictionBlocks.length > 1) {
+                    for (let i = 1; i < restrictionBlocks.length; i++) {
+                        const restrictionBlock = restrictionBlocks[i].split(']')[0];
+                        const restriction = {
+                            weekType: '',
+                            dayOfWeek: '',
+                            restrictionType: '',
+                            time: ''
+                        };
+                        
+                        const weekTypeMatch = restrictionBlock.match(/htwk:weekType\s+htwk:([^\s;]+)/);
+                        if (weekTypeMatch) restriction.weekType = weekTypeMatch[1];
+                        
+                        const dayMatch = restrictionBlock.match(/htwk:dayOfWeek\s+(?:\(([^)]+)\)|htwk:([^\s;]+))/);
+                        if (dayMatch) {
+                            restriction.dayOfWeek = dayMatch[1] ? dayMatch[1].replace(/htwk:/g, '') : dayMatch[2];
+                        }
+                        
+                        const typeMatch = restrictionBlock.match(/htwk:restrictionType\s+htwk:([^\s;]+)/);
+                        if (typeMatch) restriction.restrictionType = typeMatch[1];
+                        
+                        const timeMatch = restrictionBlock.match(/htwk:time\s+"([^"]+)"/);
+                        if (timeMatch) restriction.time = timeMatch[1];
+                        
+                        if (restriction.time) data.timeRestrictions.push(restriction);
+                    }
+                }
+                
+                // Extract preferred day
+                const dayMatch = rdfText.match(/htwk:preferredDay\s+htwk:([^\s;]+)/);
+                if (dayMatch) data.preferredDay = dayMatch[1];
+                
+                const dayTypeMatch = rdfText.match(/htwk:preferredDayType\s+htwk:([^\s;]+)/);
+                if (dayTypeMatch) data.preferredDayType = dayTypeMatch[1];
+                
+                return data;
+            }
+            
+            // Parser for Zuarbeitsblatt RDF
+            function parseZuarbeitsblattRdf(rdfText) {
+                const data = {
+                    moduleCode: '',
+                    moduleName: '',
+                    semester: '',
+                    submissionDeadline: '',
+                    faculty: '',
+                    degreeProgram: '',
+                    semesterNumber: '',
+                    studentGroups: [],
+                    totalSWS: 0,
+                    lectureSWS: 0,
+                    seminarSWS: 0,
+                    practicalSWS: 0,
+                    roomRequirements: [],
+                    techRequirements: [],
+                    lecturers: [],
+                    seminarLeaders: [],
+                    planningNotes: '',
+                    noBlockPlanning: false
+                };
+                
+                // Extract basic module info
+                const moduleCodeMatch = rdfText.match(/htwk:moduleCode\s+"([^"]+)"/);
+                if (moduleCodeMatch) data.moduleCode = moduleCodeMatch[1];
+                
+                const moduleNameMatch = rdfText.match(/htwk:moduleName\s+"([^"]+)"/);
+                if (moduleNameMatch) data.moduleName = moduleNameMatch[1];
+                
+                const semesterMatch = rdfText.match(/htwk:semester\s+"([^"]+)"/);
+                if (semesterMatch) data.semester = semesterMatch[1];
+                
+                const deadlineMatch = rdfText.match(/htwk:submissionDeadline\s+"([^"]+)"/);
+                if (deadlineMatch) data.submissionDeadline = deadlineMatch[1];
+                
+                const facultyMatch = rdfText.match(/htwk:faculty\s+"([^"]+)"/);
+                if (facultyMatch) data.faculty = facultyMatch[1];
+                
+                const programMatch = rdfText.match(/htwk:degreeProgram\s+"([^"]+)"/);
+                if (programMatch) data.degreeProgram = programMatch[1];
+                
+                const semesterNumMatch = rdfText.match(/htwk:semesterNumber\s+"([^"]+)"/);
+                if (semesterNumMatch) data.semesterNumber = semesterNumMatch[1];
+                
+                // Extract student groups
+                const groupsMatch = rdfText.match(/htwk:studentGroups\s+\(([^)]+)\)/);
+                if (groupsMatch) {
+                    data.studentGroups = groupsMatch[1].split('"').filter(item => item.trim() && item.trim() !== ' ');
+                }
+                
+                // Extract SWS information
+                const totalSWSMatch = rdfText.match(/htwk:totalSWS\s+(\d+)/);
+                if (totalSWSMatch) data.totalSWS = parseInt(totalSWSMatch[1]);
+                
+                const lectureSWSMatch = rdfText.match(/htwk:lectureSWS\s+(\d+)/);
+                if (lectureSWSMatch) data.lectureSWS = parseInt(lectureSWSMatch[1]);
+                
+                const seminarSWSMatch = rdfText.match(/htwk:seminarSWS\s+(\d+)/);
+                if (seminarSWSMatch) data.seminarSWS = parseInt(seminarSWSMatch[1]);
+                
+                const practicalSWSMatch = rdfText.match(/htwk:practicalSWS\s+(\d+)/);
+                if (practicalSWSMatch) data.practicalSWS = parseInt(practicalSWSMatch[1]);
+                
+                // Extract room and tech requirements
+                const roomsMatch = rdfText.match(/htwk:roomRequirements\s+\(([^)]+)\)/);
+                if (roomsMatch) {
+                    data.roomRequirements = roomsMatch[1].split('"').filter(item => item.trim() && item.trim() !== ' ');
+                }
+                
+                const techMatch = rdfText.match(/htwk:techRequirements\s+\(([^)]+)\)/);
+                if (techMatch) {
+                    data.techRequirements = techMatch[1].split('"').filter(item => item.trim() && item.trim() !== ' ');
+                }
+                
+                // Extract lecturers
+                const lecturerBlocks = rdfText.split('htwk:lecturer [')[1]?.split(']')[0] || '';
+                if (lecturerBlocks) {
+                    const lecturers = lecturerBlocks.split(';').map(item => item.trim()).filter(item => item);
+                    const lecturer = {};
+                    
+                    lecturers.forEach(prop => {
+                        const [key, value] = prop.split(/\s+/);
+                        if (key === 'htwk:faculty') lecturer.faculty = value.replace(/"/g, '');
+                        if (key === 'htwk:title') lecturer.title = value.replace(/"/g, '');
+                        if (key === 'htwk:firstName') lecturer.firstName = value.replace(/"/g, '');
+                        if (key === 'htwk:lastName') lecturer.lastName = value.replace(/"/g, '');
+                        if (key === 'htwk:groupsTaught') {
+                            const groups = value.match(/\(([^)]+)\)/)[1].split('"').filter(item => item.trim() && item.trim() !== ' ');
+                            lecturer.groupsTaught = groups;
+                        }
+                        if (key === 'htwk:teachingType') lecturer.teachingType = value.replace(/htwk:/, '');
+                        if (key === 'htwk:explanation') lecturer.explanation = value.replace(/"/g, '');
+                    });
+                    
+                    if (lecturer.lastName) data.lecturers.push(lecturer);
+                }
+                
+                // Extract seminar leaders
+                const seminarLeaderBlocks = rdfText.split('htwk:seminarLeader [');
+                if (seminarLeaderBlocks.length > 1) {
+                    for (let i = 1; i < seminarLeaderBlocks.length; i++) {
+                        const leaderBlock = seminarLeaderBlocks[i].split(']')[0];
+                        const leaderProps = leaderBlock.split(';').map(item => item.trim()).filter(item => item);
+                        const leader = {};
+                        
+                        leaderProps.forEach(prop => {
+                            const [key, value] = prop.split(/\s+/);
+                            if (key === 'htwk:faculty') leader.faculty = value.replace(/"/g, '');
+                            if (key === 'htwk:title') leader.title = value.replace(/"/g, '');
+                            if (key === 'htwk:firstName') leader.firstName = value.replace(/"/g, '');
+                            if (key === 'htwk:lastName') leader.lastName = value.replace(/"/g, '');
+                            if (key === 'htwk:groupsTaught') {
+                                const groups = value.match(/\(([^)]+)\)/)[1].split('"').filter(item => item.trim() && item.trim() !== ' ');
+                                leader.groupsTaught = groups;
+                            }
+                            if (key === 'htwk:teachingType') leader.teachingType = value.replace(/htwk:/, '');
+                        });
+                        
+                        if (leader.lastName) data.seminarLeaders.push(leader);
+                    }
+                }
+                
+                // Extract planning notes
+                const notesMatch = rdfText.match(/htwk:planningNotes\s+"([^"]+)"/);
+                if (notesMatch) data.planningNotes = notesMatch[1];
+                
+                // Extract block planning flag
+                const noBlockMatch = rdfText.match(/htwk:noBlockPlanning\s+(true|false)/);
+                if (noBlockMatch) data.noBlockPlanning = noBlockMatch[1] === 'true';
+                
+                return data;
+            }
+            
+            // Generate Dozentenblatt PDF
+            function generateDozentenblattPdf(data) {
+                const doc = new jsPDF();
+                
+                // Add HTWK logo and header
+                doc.setFontSize(12);
+                doc.setTextColor(0, 51, 102); // HTWK blue
+                doc.text('HTWK Leipzig', 14, 15);
+                doc.setFontSize(16);
+                doc.text('Dozentenblatt', 80, 15);
+                doc.setFontSize(12);
+                doc.text('Sommersemester 2024', 160, 15);
+                doc.setFontSize(10);
+                doc.text('DS', 14, 22);
+                doc.text('Präsenzplanung (ggf. mit digitalen Anteilen)', 25, 22);
+                
+                // Add general information
+                doc.setFontSize(12);
+                doc.text('Jeder Lehrende füllt bitte nur ein Dozentenblatt aus!', 14, 30);
+                
+                // Add professor information
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text(data.title, 14, 40);
+                doc.text(data.firstName, 50, 40);
+                doc.text(data.lastName, 80, 40);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Titel', 14, 45);
+                doc.text('Vorname', 50, 45);
+                doc.text('Name', 80, 45);
+                
+                // Faculty
+                doc.text('Fakultät/Bereich:', 14, 55);
+                doc.text(data.faculty, 50, 55);
+                
+                // Employment status
+                doc.text('Arbeitszeit (Pflichtangabe, außer Gast)', 14, 60);
+                doc.text(data.employmentStatus === 'FullTime' ? '☒ Vollzeit' : '☐ Vollzeit', 70, 60);
+                doc.text(data.employmentStatus === 'FullTime' ? '☐ Teilzeit' : '☒ Teilzeit', 100, 60);
+                
+                // Contact information
+                doc.text('E-Mailadresse (Pflichtangabe)', 14, 65);
+                doc.text(data.email, 70, 65);
+                
+                if (data.phone) {
+                    doc.text('Telefonisch erreichbar unter (optional)', 14, 70);
+                    doc.text(data.phone, 70, 70);
+                }
+                
+                // Submission date
+                const formattedDate = data.submissionDeadline ? new Date(data.submissionDeadline).toLocaleDateString('de-DE') : '';
+                doc.text('Abgabetermin an DS:', 14, 75);
+                doc.text(formattedDate, 50, 75);
+                
+                // Courses table
+                doc.setFontSize(12);
+                doc.text('Bitte geben Sie in der Tabelle Ihre Einsätze (auch Bedienfunktionen) an!', 14, 85);
+                doc.text('Durchzuführende Lehrveranstaltungen', 14, 90);
+                
+                // Create courses table
+                const coursesData = data.courses.map(course => [
+                    course.number,
+                    course.fak,
+                    course.stg,
+                    course.fs,
+                    course.groups,
+                    course.moduleCode,
+                    course.moduleName,
+                    `V:${course.v} S:${course.s} P:${course.p}`,
+                    course.digital ? 'ja' : 'nein',
+                    course.note
+                ]);
+                
+                // Auto-table for courses
+                doc.autoTable({
+                    startY: 95,
+                    head: [['lfd. Nr.', 'Fak', 'Stg.', 'FS', 'Gruppen', 'Modulnr./ LE', 'Modulname (Kürzel)', 'Reale SWS (Präsenz)', 'Digital', 'Bemerkung']],
+                    body: coursesData,
+                    margin: { left: 14 },
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [220, 220, 220] },
+                    columnStyles: {
+                        0: { cellWidth: 10 },
+                        1: { cellWidth: 10 },
+                        2: { cellWidth: 15 },
+                        3: { cellWidth: 8 },
+                        4: { cellWidth: 25 },
+                        5: { cellWidth: 15 },
+                        6: { cellWidth: 25 },
+                        7: { cellWidth: 25 },
+                        8: { cellWidth: 15 },
+                        9: { cellWidth: 25 }
+                    }
+                });
+                
+                // Add notes about SWS
+                doc.setFontSize(10);
+                doc.text('Reale SWS = tatsächlich zu realisierende SWS', 14, doc.lastAutoTable.finalY + 10);
+                doc.text('Beispiel: 2 SWS Seminar für 5 SG BIB einzeln durchgeführt ergibt 10 zu realisierende SWS', 14, doc.lastAutoTable.finalY + 15);
+                doc.text('oder', 14, doc.lastAutoTable.finalY + 20);
+                doc.text('2 SWS Vorlesung für 5 SG BIB, in 2 Blöcken mit jeweils 3 bzw. 2 SG durchgeführt,', 14, doc.lastAutoTable.finalY + 25);
+                doc.text('ergibt 4 zu realisierende SWS', 14, doc.lastAutoTable.finalY + 30);
+                doc.text('Zu jedem aufgeführten Modul/Teilmodul muss ein Zuarbeitsbogen ausgefüllt werden.', 14, doc.lastAutoTable.finalY + 35);
+                doc.text('Mehrere an einem Teilmodul beteiligte Dozenten füllen bitte einen gemeinsamen Zuarbeitsbogen aus!', 14, doc.lastAutoTable.finalY + 40);
+                
+                // Add new page for time restrictions
+                doc.addPage();
+                
+                // Teaching forms
+                doc.setFontSize(12);
+                doc.text('Lehrformen: Präsenz (mit digitalen Anteilen, wenn didaktisch vorteilhaft)', 14, 20);
+                doc.setFontSize(10);
+                doc.text('- Regelfall: Präsenz (es wird empfohlen, bei Bedarf eine virtuelle Teilnahme zu ermöglichen (hybride LV))', 14, 25);
+                doc.text('- Digital synchron (Wegezeiten für Studierende beachten)', 14, 30);
+                doc.text('- Digital asynchron', 14, 35);
+                doc.text('Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen.', 14, 40);
+                doc.text('Digitale Lehre steht unter dem Genehmigungsvorbehalt des Dekans und bedarf der vorherigen Vorlage eines', 14, 45);
+                doc.text('Lehrkonzeptes.', 14, 50);
+                doc.text('Der digitale Lehranteil darf pro Modul pro Semester max. 50% ausmachen. Für die Genehmigung und Anrechnung', 14, 55);
+                doc.text('auf das Lehrdeputat sind Mindeststandards zu beachten (siehe Hinweise zu digitaler Lehre an der HTWK Leipzig,', 14, 60);
+                doc.text('Kapitel 4.1).', 14, 65);
+                doc.text('Ferner steht jedwede digitale Lehre unter dem Ermöglichungsvorbehalt der Stunden- und Raumplanung.', 14, 70);
+                
+                // Time restrictions
+                doc.setFontSize(12);
+                doc.text('Notwendige regelmäßige Sperrzeiten für interne Dozenten sind:', 14, 80);
+                
+                // Create time restrictions table
+                const restrictionsData = data.timeRestrictions.map(restriction => [
+                    restriction.weekType === 'AllWeeks' ? 'aw' : restriction.weekType === 'EvenWeeks' ? 'gw' : 'uw',
+                    restriction.dayOfWeek.includes(' ') ? 'Mo-Fr' : restriction.dayOfWeek,
+                    restriction.restrictionType === 'NotAvailableBefore' ? 'Bis ' + restriction.time : 'Ab ' + restriction.time
+                ]);
+                
+                // Auto-table for time restrictions
+                doc.autoTable({
+                    startY: 85,
+                    head: [['Wochen aw/gw/uw', 'Wochentag Mo/Di/Mi/Do/Fr', 'Uhrzeit Bis/Ab']],
+                    body: restrictionsData,
+                    margin: { left: 14 },
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [220, 220, 220] }
+                });
+                
+                // Preferred day
+                if (data.employmentStatus === 'FullTime') {
+                    doc.text('Nach Möglichkeit ist folgender Dozenten-/Forschungstag einzuplanen: (nur bei Vollzeit angeben!)', 14, doc.lastAutoTable.finalY + 10);
+                    
+                    const preferredDayData = [
+                        ['Tag ist egal', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'],
+                        [
+                            data.preferredDay === 'any' ? '☒' : '☐',
+                            (data.preferredDay === 'Monday' && data.preferredDayType === 'TeachingDay') ? '☒ D' : '☐ D' + ' ' + (data.preferredDay === 'Monday' && data.preferredDayType === 'ResearchDay') ? '☒ F' : '☐ F',
+                            (data.preferredDay === 'Tuesday' && data.preferredDayType === 'TeachingDay') ? '☒ D' : '☐ D' + ' ' + (data.preferredDay === 'Tuesday' && data.preferredDayType === 'ResearchDay') ? '☒ F' : '☐ F',
+                            (data.preferredDay === 'Wednesday' && data.preferredDayType === 'TeachingDay') ? '☒ D' : '☐ D' + ' ' + (data.preferredDay === 'Wednesday' && data.preferredDayType === 'ResearchDay') ? '☒ F' : '☐ F',
+                            (data.preferredDay === 'Thursday' && data.preferredDayType === 'TeachingDay') ? '☒ D' : '☐ D' + ' ' + (data.preferredDay === 'Thursday' && data.preferredDayType === 'ResearchDay') ? '☒ F' : '☐ F',
+                            (data.preferredDay === 'Friday' && data.preferredDayType === 'TeachingDay') ? '☒ D' : '☐ D' + ' ' + (data.preferredDay === 'Friday' && data.preferredDayType === 'ResearchDay') ? '☒ F' : '☐ F'
+                        ]
+                    ];
+                    
+                    doc.autoTable({
+                        startY: doc.lastAutoTable.finalY + 15,
+                        head: [preferredDayData[0]],
+                        body: [preferredDayData[1]],
+                        margin: { left: 14 },
+                        styles: { fontSize: 10 },
+                        headStyles: { fillColor: [220, 220, 220] }
+                    });
+                }
+                
+                // Add notes
+                if (data.notes) {
+                    doc.setFontSize(12);
+                    doc.text('Wichtige Hinweise zur Semesterplanung:', 14, doc.lastAutoTable.finalY + 20);
+                    doc.setFontSize(10);
+                    const splitNotes = doc.splitTextToSize(data.notes, 180);
+                    doc.text(splitNotes, 14, doc.lastAutoTable.finalY + 25);
+                }
+                
+                // Add signature fields
+                doc.setFontSize(12);
+                doc.text('Datum, Unterschrift', 14, doc.lastAutoTable.finalY + 40);
+                doc.text('Verantwortliche/r Dozent/in', 14, doc.lastAutoTable.finalY + 45);
+                
+                doc.text('Datum, Unterschrift', 120, doc.lastAutoTable.finalY + 40);
+                doc.text('Dekan/in der Fakultät', 120, doc.lastAutoTable.finalY + 45);
+                
+                // Save the PDF
+                doc.save(`Dozentenblatt_${data.lastName}_SoSe2024.pdf`);
+            }
+            
+            // Generate Zuarbeitsblatt PDF
+            function generateZuarbeitsblattPdf(data) {
+                const doc = new jsPDF();
+                
+                // Set font styles
+                doc.setFont('helvetica');
+                doc.setTextColor(0, 51, 102); // HTWK blue
+                
+                // Page 1
+                doc.setFontSize(16);
+                doc.text('Abgabetermin bei DS: ' + formatDate(data.submissionDeadline), 105, 15, { align: 'center' });
+                
+                doc.setFontSize(12);
+                doc.text('Zuarbeit', 105, 25, { align: 'center' });
+                doc.setFontSize(14);
+                doc.text('Lehrveranstaltungsplanung', 105, 30, { align: 'center' });
+                doc.setFontSize(12);
+                doc.text(data.semester, 105, 35, { align: 'center' });
+                doc.text('Präsenzsemester', 105, 40, { align: 'center' });
+                doc.text('Sommersemester 2022: Planungswochen 14-28 = Kalenderwochen 14-28', 105, 45, { align: 'center' });
+                
+                // Faculty/Program table
+                doc.autoTable({
+                    startY: 50,
+                    head: [['Fakultät', 'Studiengang', 'Fachsemester', 'Gruppen']],
+                    body:

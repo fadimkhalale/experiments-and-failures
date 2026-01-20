@@ -1,0 +1,52 @@
+@prefix ex: http://example.org/ .
+@prefix xsd: http://www.w3.org/2001/XMLSchema .
+
+ex:modul_1756228568141
+  ex:fakultaet "FIM" ;
+  ex:studiengang "BIB" ;
+  ex:fs "3" ;
+  ex:gruppen "13 BIB 1 - 5" ;
+  ex:modulnr "1300" ;
+  ex:modulname "BAUKO I" ;
+  ex:lehrveranstaltung "Einführung in die Bibliothekswissenschaft" ;
+  ex:swsVorlesung "2" ;
+  ex:swsSeminar "1" ;
+  ex:swsPraktikum "2" ;
+  ex:raum "Hörsaal 123, Seminarraum 45" ;
+  ex:technik "Beamer, PC, Whiteboard" ;
+  ex:planungshinweise "Gleichmäßige Verteilung auf gerade/ungerade Wochen, Vorlesung zwingend vor Seminar" ;
+  ex:kwHinweise "KW42, KW43, KW44, KW45, KW46, KW47, KW48, KW49, KW50, KW51, KW52, KW01, KW02, KW03, KW04, KW05, KW06" ;
+  ex:name "Prof. Dr. Müller" ;
+  ex:unterschrift "Fadi Mkhalale" ;
+  ex:rueckgabedatum "15.05.2025" ;
+  ex:profUnterschrift "Prof. Dr. Mustermann" ;
+  ex:dekanUnterschrift "Prof. Dr. Schmidt" ;
+  ex:datumUnterschrift "15.05.2025" ;
+
+  ex:lesende [
+    ex:titel "Prof. Dr." ;
+    ex:name "Schmidt" ;
+    ex:gruppen "1-5" ;
+    ex:erlaeuterung "Gemeinsame Vorlesung für alle Gruppen, montags 09:15-10:45 Uhr";
+  ] ;
+
+  ex:seminarleiter [
+    ex:titel "Dr." ;
+    ex:name "Meier" ;
+    ex:gruppen "1-3" ;
+    ex:erlaeuterung "Seminar in 2 Gruppen, Blockveranstaltung gerader Wochen, Dienstag 13:30-17:00 Uhr";
+  ] ;
+
+  ex:seminarleiter [
+    ex:titel "M.Sc." ;
+    ex:name "Schulze" ;
+    ex:gruppen "4-5" ;
+    ex:erlaeuterung "Seminar in 2 Gruppen, Blockveranstaltung ungerader Wochen, Mittwoch 13:30-17:00 Uhr";
+  ] ;
+
+  ex:praktikumsleiter [
+    ex:titel "" ;
+    ex:name "Wagner" ;
+    ex:gruppen "1-5" ;
+    ex:erlaeuterung "Praktikum in Einzelgruppen, wöchentlich wechselnd: Gruppe 1+2 (KW42,44,...), Gruppe 3+4 (KW43,45,...), Gruppe 5 (flexibel)";
+  ] .

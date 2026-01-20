@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTWK PDF Manager</title>
+  <link rel="icon" href="data:,">
+  
+  <link rel="stylesheet" href="css/pdf-manager.css">
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="https://upload.wikimedia.org/wikipedia/de/1/16/HTWK-Logo.svg" alt="HTWK Logo">
+    </div>
+    
+    <h1>PDF Dokumenten Manager</h1>
+    
+    <div class="filter-section">
+      <div class="filter-group">
+        <label for="filterType">Formular Typ</label>
+        <select id="filterType">
+          <option value="">Alle Typen</option>
+          <option value="Dozentenblatt">Dozentenblatt</option>
+          <option value="Zuarbeitsblatt">Zuarbeitsblatt</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="filterName">Name filtern</label>
+        <input type="text" id="filterName" placeholder="Nach Namen suchen...">
+      </div>
+      
+      <button id="filterBtn">Filter anwenden</button>
+    </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Dateiname</th>
+          <th>Datum</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody id="pdfTable"></tbody>
+    </table>
+  </div>
+
+  
+  <script src="js/pdf-manager.js"></script>
+</body>
+</html>

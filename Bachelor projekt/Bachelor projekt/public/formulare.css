@@ -1,0 +1,343 @@
+body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .input-section, .output-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+            width: 210mm; /* A4 width */
+            margin: 0 auto;
+        }
+        
+        .zuarbeitsblatt {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+            color: #000;
+        }
+        .zuarbeitsblatt .container {
+            width: 210mm;
+            margin: 0 auto;
+            padding: 10mm;
+            box-sizing: border-box;
+        }
+        .zuarbeitsblatt .header {
+            text-align: center;
+            margin-bottom: 10mm;
+        }
+        .zuarbeitsblatt .header h1 {
+            font-size: 16px;
+            margin-bottom: 5mm;
+        }
+        .zuarbeitsblatt .header .info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5mm;
+        }
+        .zuarbeitsblatt .section {
+            margin-bottom: 8mm;
+        }
+        .zuarbeitsblatt .section-title {
+            font-weight: bold;
+            margin-bottom: 3mm;
+            text-decoration: underline;
+        }
+        .zuarbeitsblatt .form-row {
+            display: flex;
+            margin-bottom: 2mm;
+            align-items: center;
+        }
+        .zuarbeitsblatt .form-label {
+            width: 40mm;
+            font-weight: bold;
+        }
+        .zuarbeitsblatt .form-input {
+            flex-grow: 1;
+            border-bottom: 1px solid #000;
+            min-height: 5mm;
+        }
+        .zuarbeitsblatt .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5mm;
+        }
+        .zuarbeitsblatt .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-right: 5mm;
+        }
+        .zuarbeitsblatt table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5mm;
+        }
+        .zuarbeitsblatt th, .zuarbeitsblatt td {
+            border: 1px solid #000;
+            padding: 1mm;
+            text-align: center;
+            font-size: 10px;
+        }
+        .zuarbeitsblatt th {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+        .zuarbeitsblatt .signature-area {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15mm;
+        }
+        .zuarbeitsblatt .signature-box {
+            width: 60mm;
+            border-top: 1px solid #000;
+            padding-top: 2mm;
+        }
+       .page-break {
+            page-break-after: always;
+            break-after: page;
+            margin-top: 20mm;
+        }
+
+        .container.page-break {
+            page-break-before: always;
+            break-before: page;
+            margin-top: 10mm;
+        }
+        
+        .zuarbeitsblatt .notes {
+            font-size: 10px;
+            margin-top: 2mm;
+        }
+        .zuarbeitsblatt .two-columns {
+            display: flex;
+            justify-content: space-between;
+        }
+        .zuarbeitsblatt .column {
+            width: 48%;
+        }
+        .zuarbeitsblatt .time-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5mm;
+        }
+        .zuarbeitsblatt .radio-group {
+            display: flex;
+            gap: 5mm;
+        }
+        .zuarbeitsblatt .radio-item {
+            display: flex;
+            align-items: center;
+        }
+        .zuarbeitsblatt .footer {
+            font-size: 10px;
+            text-align: center;
+            margin-top: 5mm;
+        }
+        .zuarbeitsblatt .kw-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2mm;
+            margin-bottom: 5mm;
+        }
+        .zuarbeitsblatt .kw-item {
+            display: flex;
+            align-items: center;
+        }
+        .zuarbeit-header-box {
+          border: 2px solid black;
+          padding: 8px;
+          margin-bottom: 5px;
+        }
+
+        .zuarbeit-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+        }
+
+        .zuarbeit-header-row .left,
+        .zuarbeit-header-row .center,
+        .zuarbeit-header-row .right {
+          flex: 1;
+          font-size: 14px;
+          line-height: 1.4;
+        }
+
+        .zuarbeit-header-row .center {
+          text-align: center;
+          font-size: 16px;
+        }
+
+        .zuarbeit-header-row .right {
+          text-align: right;
+        }
+
+        .planungswochen-display {
+          margin-top: 5px;
+          margin-bottom: 10px;
+          font-size: 14px;
+        }
+
+        .signature-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .signature-pad {
+            border: 1px solid #000;
+            background-color: #fff;
+            margin-top: 5px;
+        }
+
+        .clear-signature {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 3px;
+            }
+
+            .date-field {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            }
+    
+
+        #lehrveranstaltungen td {
+            padding-top: 6px;
+            padding-bottom: 6px;
+            height: 15mm;
+            vertical-align: top;
+        }
+
+        #modulnr-name,
+        #lehrveranstaltung {
+            position: relative;
+            min-height: 10mm;
+            padding-bottom: 3mm;
+        }
+
+        #modulnr-name::after,
+        #lehrveranstaltung::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 5mm; 
+          height: 1px;
+          background: black;
+        }
+
+        #modulnr-name::before,
+        #lehrveranstaltung::before {
+          content: attr(data-label);
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          font-size: 11px;
+          color: black;
+          font-weight: bold;
+        }
+
+        body.dozent #planungswochen,
+        body.dozent label[for="planungswochen"] {
+            display: none;
+        }
+
+
+        body.zuarbeit .container {
+            transform: translateX(-2mm);
+        }
+
+
+        body.dozent .container {
+          transform: translateY(-10mm);
+        }
+
+        .signature-pad {
+            border: 1px solid #000;
+            background-color: #fff;
+            margin-top: 5px;
+        }
+
+        .dozenten-header-box {
+            border: 2px solid black;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        .dozenten-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .dozenten-header-row .left,
+        .dozenten-header-row .center,
+        .dozenten-header-row .right {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .dozenten-header-row .center {
+          text-align: center;
+          font-size: 18px;
+          font-weight: bold;
+        }
+
+        .dozenten-header-row .right {
+            text-align: right;
+        }
+
+        .dozenten-note {
+          font-size: 14px;
+          margin-top: 5px;
+        }
+
+        body.dozent #planungswochen,
+        body.dozent label[for="planungswochen"] {
+            display: none;
+        }

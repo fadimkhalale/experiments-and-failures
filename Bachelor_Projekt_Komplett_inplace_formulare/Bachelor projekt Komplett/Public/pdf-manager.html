@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTWK PDF Manager</title>
+  <link rel="icon" href="data:,">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .logo {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .logo img {
+      height: 80px;
+      width: auto;
+    }
+    .filter-section {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 5px;
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: flex-end;
+    }
+    .filter-group {
+      flex: 1;
+    }
+    .filter-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    select, input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 8px 15px;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 5px;
+    }
+    .view-btn { background: #FF9800; }
+    .edit-btn { background: #9C27B0; }
+    .delete-btn { background: #f44336; }
+    .dozent { background-color: rgba(76, 175, 80, 0.1); }
+    .zuarbeit { background-color: rgba(33, 150, 243, 0.1); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="https://upload.wikimedia.org/wikipedia/de/1/16/HTWK-Logo.svg" alt="HTWK Logo">
+    </div>
+    
+    <h1>PDF Dokumenten Manager</h1>
+    
+    <div class="filter-section">
+      <div class="filter-group">
+        <label for="filterType">Formular Typ</label>
+        <select id="filterType">
+          <option value="">Alle Typen</option>
+          <option value="Dozentenblatt">Dozentenblatt</option>
+          <option value="Zuarbeitsblatt">Zuarbeitsblatt</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="filterName">Name filtern</label>
+        <input type="text" id="filterName" placeholder="Nach Namen suchen...">
+      </div>
+      
+      <button id="filterBtn">Filter anwenden</button>
+    </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Dateiname</th>
+          <th>Datum</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody id="pdfTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+  let allPDFs = [];
+  
+  async function loadPDFs() {
+    try {
+      const response = await fetch('/list');
+      allPDFs = await response.json();
+      
+      // PDFs mit Typen versehen basierend auf dem Dateinamen
+      allPDFs = allPDFs.map(pdf => {
+        let type = '';
+        if (pdf.name.startsWith('Dozentenblatt_')) {
+          type = 'Dozentenblatt';
+        } else if (pdf.name.startsWith('Zuarbeitsblatt_')) {
+          type = 'Zuarbeitsblatt';
+        }
+        return {...pdf, type};
+      });
+      
+      applyFilters();
+    } catch (e) {
+      console.log("Fehler:", e);
+    }
+  }
+  
+  function applyFilters() {
+    const type = document.getElementById('filterType').value;
+    const name = document.getElementById('filterName').value.toLowerCase();
+    
+    const filtered = allPDFs.filter(pdf => {
+      const matchesType = !type || pdf.type === type;
+      const matchesName = !name || pdf.name.toLowerCase().includes(name);
+      return matchesType && matchesName;
+    });
+    
+    renderPDFs(filtered);
+  }
+  
+  function renderPDFs(pdfs) {
+    const tbody = document.getElementById('pdfTable');
+    tbody.innerHTML = pdfs.map(pdf => `
+      <tr class="${pdf.type.toLowerCase().replace('blatt', '')}">
+        <td>${pdf.name}</td>
+        <td>${pdf.date}</td>
+        <td class="action-buttons">
+          <button class="delete-btn" data-path="${pdf.path}" data-name="${pdf.name}">Löschen</button>
+          <button class="view-btn" data-path="${pdf.path}">Ansehen</button>
+          <button class="edit-btn" data-path="${pdf.path}" data-name="${pdf.name}">Umbenennen</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function deletePDF(path, name) {
+    if (confirm(`Möchten Sie die Datei "${name}" wirklich löschen?`)) {
+      try {
+        const response = await fetch('/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          loadPDFs(); // Liste neu laden nach erfolgreichem Löschen
+        } else {
+          alert('Löschen fehlgeschlagen: ' + (result.message || 'Unbekannter Fehler'));
+        }
+      } catch (error) {
+        console.error('Fehler beim Löschen:', error);
+        alert('Fehler beim Löschen: ' + error.message);
+      }
+    }
+  }
+  
+  // Event Listener
+  document.getElementById('filterBtn').addEventListener('click', applyFilters);
+  
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('view-btn')) {
+      window.open(`/view?path=${encodeURIComponent(e.target.dataset.path)}`, '_blank');
+    }
+    
+    if (e.target.classList.contains('edit-btn')) {
+      const oldPath = e.target.dataset.path;
+      const oldName = e.target.dataset.name;
+      const newName = prompt("Neuer Dateiname:", oldName);
+      
+      if (newName && newName !== oldName) {
+        fetch('/rename', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ oldPath, newName })
+        }).then(res => res.json())
+          .then(data => data.success && loadPDFs());
+      }
+    }
+    
+    if (e.target.classList.contains('delete-btn')) {
+      const path = e.target.dataset.path;
+      const name = e.target.dataset.name;
+      deletePDF(path, name);
+    }
+  });
+  
+  // Initial laden
+  loadPDFs();
+  </script>
+</body>
+</html>

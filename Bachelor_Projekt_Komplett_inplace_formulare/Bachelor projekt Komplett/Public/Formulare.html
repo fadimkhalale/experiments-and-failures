@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Formulare (TTL-Auswahl integriert)</title>
+  <style>
+    body { font-family: system-ui, Arial; margin: 18px; }
+    label { display:block; margin-top:8px; }
+    textarea { width:100%; height:200px; font-family: monospace; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    .col { flex:1; min-width:260px; }
+    fieldset { margin-top:12px; padding:10px; }
+    select, input, button { padding:6px; font-size:14px; }
+  </style>
+  <script src="https://unpkg.com/n3/browser/n3.min.js"></script>
+</head>
+<body>
+  <h1>Formulare — Auswahl aus data/*.ttl</h1>
+  <p>Wähle zuerst die Dateigruppe, dann eine ID (Subject). Die RDf wird geladen und einige Formularfelder automatisch befüllt.</p>
+
+  <div>
+    <label for="fileSelect">Datei</label>
+    <select id="fileSelect">
+      <option value="all">Alle</option>
+      <option value="data/dozentenblatt.ttl">dozentenblatt.ttl</option>
+      <option value="data/zuarbeitsblatt.ttl">zuarbeitsblatt.ttl</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="subjectSelect">ID / Subject auswählen</label>
+    <select id="subjectSelect"><option>lade...</option></select>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <fieldset>
+        <legend>Ausgewählte RDF (Turtle-Fragment)</legend>
+        <textarea id="turtleView" readonly></textarea>
+        <div style="margin-top:8px">
+          <button id="downloadBtn">Ausgewählte RDF herunterladen</button>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="col">
+      <fieldset>
+        <legend>Formular (Beispiel) — automatische Übernahme</legend>
+        <label>Titel <input id="titel" /></label>
+        <label>Vorname <input id="vorname" /></label>
+        <label>Nachname <input id="nachname" /></label>
+        <label>Email <input id="email" /></label>
+        <label>Telefon <input id="telefon" /></label>
+        <label>Modulname <input id="modulname" /></label>
+        <label>Modulnummer <input id="modulnr" /></label>
+        <div style="margin-top:8px">
+          <button id="applyToForm">RDF -> Formular (manuell)</button>
+        </div>
+      </fieldset>
+    </div>
+  </div>
+
+<script>
+(async function(){
+  const files = ['data/dozentenblatt.ttl', 'data/zuarbeitsblatt.ttl'];
+  const fileSelect = document.getElementById('fileSelect');
+  const subjectSelect = document.getElementById('subjectSelect');
+  const turtleView = document.getElementById('turtleView');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const applyBtn = document.getElementById('applyToForm');
+
+  // store: filename -> { subjectURI -> { quads, turtle, short } }
+  const store = {};
+
+  async function parseAndGroup(filename, text) {
+    return new Promise((resolve, reject) => {
+      const parser = new N3.Parser();
+      const quads = [];
+      parser.parse(text, (err, quad, prefixes) => {
+        if (err) return reject(err);
+        if (quad) quads.push(quad);
+        else {
+          const subjects = {};
+          quads.forEach(q => {
+            const s = q.subject.value;
+            if (!subjects[s]) subjects[s] = [];
+            subjects[s].push(q);
+          });
+          const result = {};
+          const promises = Object.keys(subjects).map(async s => {
+            const writer = new N3.Writer({ prefixes: { ex: 'http://example.org/' }});
+            subjects[s].forEach(q => writer.addQuad(q));
+            const turtleFragment = await new Promise((res, rej) => writer.end((err, out) => err ? rej(err) : res(out)));
+            const local = s.split(/[\/#!]/).pop();
+            result[s] = { quads: subjects[s], turtle: turtleFragment, short: local };
+          });
+          Promise.all(promises).then(() => resolve(result)).catch(reject);
+        }
+      });
+    });
+  }
+
+  // load files
+  for (const f of files) {
+    try {
+      const resp = await fetch(f);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status + ' beim Laden von ' + f);
+      const txt = await resp.text();
+      store[f] = await parseAndGroup(f, txt);
+    } catch (e) {
+      console.warn('Fehler beim Laden von', f, e);
+      store[f] = {};
+    }
+  }
+
+  function populateSubjects(filter='all') {
+    subjectSelect.innerHTML = '';
+    const addFor = (filename) => {
+      const subjects = store[filename] || {};
+      const keys = Object.keys(subjects);
+      if (keys.length === 0) return;
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = filename.split('/').pop();
+      keys.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k;
+        opt.textContent = subjects[k].short + ' — ' + k;
+        opt.dataset.file = filename;
+        optgroup.appendChild(opt);
+      });
+      subjectSelect.appendChild(optgroup);
+    };
+    if (filter === 'all') {
+      files.forEach(addFor);
+    } else {
+      addFor(filter);
+    }
+    if (!subjectSelect.querySelector('option')) {
+      const o = document.createElement('option'); o.value=''; o.textContent='keine Subjects gefunden'; subjectSelect.appendChild(o);
+    }
+  }
+
+  populateSubjects();
+
+  fileSelect.addEventListener('change', e => {
+    populateSubjects(e.target.value);
+    turtleView.value = '';
+  });
+
+  subjectSelect.addEventListener('change', e => {
+    const subj = e.target.value;
+    if (!subj) { turtleView.value = ''; return; }
+    const filename = (e.target.selectedOptions[0] && e.target.selectedOptions[0].dataset.file) || files[0];
+    const obj = (store[filename] && store[filename][subj]) || null;
+    if (!obj) { turtleView.value = '// Kein Turtle-Fragment gefunden.'; return; }
+    turtleView.value = obj.turtle;
+    fillFormFromQuads(obj.quads);
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    const txt = turtleView.value;
+    if (!txt) return alert('Keine RDF ausgewählt.');
+    const blob = new Blob([txt], {type:'text/turtle'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'selected_subject.ttl'; document.body.appendChild(a); a.click(); a.remove();
+  });
+
+  applyBtn.addEventListener('click', () => {
+    const subj = subjectSelect.value;
+    if (!subj) return alert('Keine ID ausgewählt.');
+    const filename = (subjectSelect.selectedOptions[0] && subjectSelect.selectedOptions[0].dataset.file) || files[0];
+    const obj = (store[filename] && store[filename][subj]) || null;
+    if (!obj) return alert('Daten nicht gefunden.');
+    fillFormFromQuads(obj.quads);
+  });
+
+  function fillFormFromQuads(quads) {
+    const ids = ['titel','vorname','nachname','email','telefon','modulname','modulnr'];
+    ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
+    quads.forEach(q => {
+      const pred = q.predicate.value.split(/[\/#!]/).pop().toLowerCase();
+      const val = q.object ? (q.object.value || '') : '';
+      switch(pred) {
+        case 'titel': setVal('titel', val); break;
+        case 'vorname': setVal('vorname', val); break;
+        case 'nachname': setVal('nachname', val); break;
+        case 'email': setVal('email', val); break;
+        case 'telefon': setVal('telefon', val); break;
+        case 'modulname': setVal('modulname', val); break;
+        case 'modulnr': setVal('modulnr', val); break;
+      }
+    });
+
+    function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
+  }
+
+  // auto-select first subject if present
+  setTimeout(() => {
+    const first = subjectSelect.querySelector('option[value]');
+    if (first) { subjectSelect.value = first.value; subjectSelect.dispatchEvent(new Event('change')); }
+  }, 200);
+})();
+</script>
+</body>
+</html>
